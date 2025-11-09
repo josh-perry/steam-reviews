@@ -1,0 +1,26 @@
+{
+  "name": "steam-reviews",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "build": "webpack -c ./webpack.config.ts",
+    "watch": "webpack --watch -c ./webpack.config.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "@types/node": "^24.10.0",
+    "@types/webpack": "^5.28.5",
+    "html-webpack-plugin": "^5.6.4",
+    "ts-loader": "^9.5.4",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3",
+    "webpack": "^5.102.1",
+    "webpack-cli": "^6.0.1"
+  },
+  "dependencies": {
+    "lit": "^3.3.1"
+  }
+}
