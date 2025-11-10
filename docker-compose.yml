@@ -6,15 +6,16 @@ services:
       context: ./api
       dockerfile: Dockerfile
     container_name: steam-reviews-api
-    ports:
-      - "5000:5000"
     environment:
       - NODE_ENV=production
       - PORT=5000
+    ports:
+      - "5000:5000"
     volumes:
       - ./api/src/data:/app/src/data
     networks:
       - steam-reviews-network
+      - nginx-proxy-manager_default
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5000/api/health"]
@@ -29,11 +30,12 @@ services:
       dockerfile: Dockerfile
     container_name: steam-reviews-frontend
     ports:
-      - "80:80"
+      - "3000:80"
     depends_on:
       - api
     networks:
       - steam-reviews-network
+      - nginx-proxy-manager_default
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/"]
@@ -45,6 +47,8 @@ services:
 networks:
   steam-reviews-network:
     driver: bridge
+  nginx-proxy-manager_default:
+    external: true
 
 volumes:
   api-data:
