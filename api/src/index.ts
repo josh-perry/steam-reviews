@@ -39,7 +39,7 @@ app.get('/api/games', (req, res) => {
             appId: row.id,
             name: row.name,
             rating: row.positive_reviews && row.negative_reviews
-                ? parseFloat(((row.positive_reviews / (row.positive_reviews + row.negative_reviews)) * 5).toFixed(1))
+                ? parseFloat(((row.positive_reviews / (row.positive_reviews + row.negative_reviews)) * 100).toFixed(2))
                 : 0,
             reviewCount: row.total_reviews || 0
         }));

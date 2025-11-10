@@ -132,8 +132,8 @@ class ReviewResults extends ReduxMixin(LitElement) {
 		
 		if (!currentRound) return;
 
-		const targetGameA = Math.round((currentRound.gameA.rating / 5) * 100);
-		const targetGameB = Math.round((currentRound.gameB.rating / 5) * 100);
+		const targetGameA = currentRound.gameA.rating;
+		const targetGameB = currentRound.gameB.rating;
 
 		const startTime = performance.now();
 
@@ -143,8 +143,8 @@ class ReviewResults extends ReduxMixin(LitElement) {
 
 			const easeOut = 1 - Math.pow(1 - progress, 3);
 
-			this.gameAPercentage = Math.round(targetGameA * easeOut);
-			this.gameBPercentage = Math.round(targetGameB * easeOut);
+			this.gameAPercentage = parseFloat((targetGameA * easeOut).toFixed(2));
+			this.gameBPercentage = parseFloat((targetGameB * easeOut).toFixed(2));
 
 			this.requestUpdate();
 
@@ -211,7 +211,7 @@ class ReviewResults extends ReduxMixin(LitElement) {
 				</div>
 				<div class="game-details">
 					<h3>${currentRound.gameA.name}</h3>
-					<div class="rating-display">${this.gameAPercentage}%</div>
+					<div class="rating-display">${this.gameAPercentage.toFixed(2)}%</div>
 				</div>
 			</div>
 
@@ -225,7 +225,7 @@ class ReviewResults extends ReduxMixin(LitElement) {
 				</div>
 				<div class="game-details">
 					<h3>${currentRound.gameB.name}</h3>
-					<div class="rating-display">${this.gameBPercentage}%</div>
+					<div class="rating-display">${this.gameBPercentage.toFixed(2)}%</div>
 				</div>
 			</div>
 		`;
