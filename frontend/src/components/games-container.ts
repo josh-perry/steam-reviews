@@ -1,8 +1,6 @@
 import { LitElement, html, css } from 'lit';
-import { property } from 'lit/decorators.js';
 import { ReduxMixin } from '../store/ReduxMixin';
 import { getCurrentRoundData } from '../store/slices/gameStatusSlice';
-import type { GameRound } from '../store/slices/gameStatusSlice';
 
 class GamesContainer extends ReduxMixin(LitElement) {
 	static styles = css`
@@ -17,10 +15,15 @@ class GamesContainer extends ReduxMixin(LitElement) {
 	`;
 
 	render() {
+		const { showingResults } = this.getState().gameStatus;
 		const currentRound = getCurrentRoundData(this.getState());
 		
 		if (!currentRound) {
 			return html``;
+		}
+
+		if (showingResults) {
+			return html`<review-results></review-results>`;
 		}
 
 		return html`

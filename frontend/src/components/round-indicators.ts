@@ -55,7 +55,7 @@ class RoundIndicators extends LitElement {
         const roundIndicators = this.roundResults.map((r) => {
             let className = 'round-indicator';
             
-            if (r.played) {
+            if (r.played && r.resultVisible) {
                 if (r.isCorrect) {
                     className += ' correct';
                 } else {

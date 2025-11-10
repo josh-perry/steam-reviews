@@ -16,6 +16,7 @@ export interface RoundResult {
 	correctGame: Game;
 	isCorrect: boolean;
 	played: boolean;
+	resultVisible: boolean;
 }
 
 export interface GameRound {
@@ -34,6 +35,7 @@ interface GameStatusState {
 	score: number;
 	loading: boolean;
 	currentRoundAnswered: boolean;
+	showingResults: boolean;
 	games: Game[];
 	error: string | null;
 }
@@ -48,6 +50,7 @@ const initialState: GameStatusState = {
 	score: 0,
 	loading: false,
 	currentRoundAnswered: false,
+	showingResults: false,
 	games: [],
 	error: null,
 };
@@ -127,6 +130,7 @@ const gameStatusSlice = createSlice({
 			const currentRoundIndex = state.currentRound - 1;
 			
 			state.currentRoundAnswered = true;
+			state.showingResults = true;
 			
 			if (currentRoundIndex >= 0 && currentRoundIndex < state.roundResults.length) {
 				const roundResult = state.roundResults[currentRoundIndex];
@@ -135,18 +139,32 @@ const gameStatusSlice = createSlice({
 				roundResult.selectedGame = selectedGame;
 				roundResult.isCorrect = isCorrect;
 				roundResult.played = true;
+				roundResult.resultVisible = false;
 				
 				if (isCorrect) {
 					state.score += 1;
 				}
-				
-				if (state.currentRound >= state.totalRounds) {
-					state.gameComplete = true;
-					state.gameInProgress = false;
-				} else {
-					state.currentRound += 1;
-					state.currentRoundAnswered = false;
-				}
+			}
+		},
+
+		showRoundResult: (state) => {
+			const currentRoundIndex = state.currentRound - 1;
+			
+			if (currentRoundIndex >= 0 && currentRoundIndex < state.roundResults.length) {
+				const roundResult = state.roundResults[currentRoundIndex];
+				roundResult.resultVisible = true;
+			}
+		},
+
+		proceedToNextRound: (state) => {
+			state.showingResults = false;
+			
+			if (state.currentRound >= state.totalRounds) {
+				state.gameComplete = true;
+				state.gameInProgress = false;
+			} else {
+				state.currentRound += 1;
+				state.currentRoundAnswered = false;
 			}
 		},
 		
@@ -191,6 +209,7 @@ const gameStatusSlice = createSlice({
 				state.currentRound = 1;
 				state.score = 0;
 				state.currentRoundAnswered = false;
+				state.showingResults = false;
 				state.games = action.payload;
 				
 				state.preGeneratedRounds = generateGameRounds(action.payload, state.totalRounds);
@@ -201,7 +220,8 @@ const gameStatusSlice = createSlice({
 					selectedGame: null,
 					correctGame: round.correctGame,
 					isCorrect: false,
-					played: false
+					played: false,
+					resultVisible: false
 				}));
 			})
 			.addCase(startGameWithData.rejected, (state, action) => {
@@ -212,7 +232,9 @@ const gameStatusSlice = createSlice({
 });
 
 export const { 
-	submitRoundAnswer, 
+	submitRoundAnswer,
+	showRoundResult,
+	proceedToNextRound,
 	resetGame, 
 	setLoading,
 	clearError

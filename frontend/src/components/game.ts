@@ -87,6 +87,9 @@ class GameComponent extends ReduxMixin(LitElement) {
 		
 		.game-details {
 			width: 100%;
+			min-height: 140px;
+			display: flex;
+			flex-direction: column;
 		}
 		
 		.game-details h3 {
@@ -94,12 +97,20 @@ class GameComponent extends ReduxMixin(LitElement) {
 			font-size: 1.5rem;
 			color: #333;
 		}
+
+		.rating-placeholder {
+			flex: 1;
+			display: flex;
+			flex-direction: column;
+			justify-content: center;
+			align-items: center;
+			min-height: 80px;
+		}
 	`;
 
 	private handleClick() {
 		const { gameInProgress, currentRoundAnswered } = this.getState().gameStatus;
 		
-		// Only allow clicks if game is in progress and current round hasn't been answered
 		if (gameInProgress && !currentRoundAnswered) {
 			this.dispatch(submitRoundAnswer({ selectedGame: this.game }));
 		}
@@ -109,7 +120,6 @@ class GameComponent extends ReduxMixin(LitElement) {
 		const { gameInProgress, currentRoundAnswered } = this.getState().gameStatus;
 		const isDisabled = !gameInProgress || currentRoundAnswered;
 		
-		// Add disabled class if buttons should be disabled
 		if (isDisabled) {
 			this.classList.add('disabled');
 		} else {
@@ -129,6 +139,8 @@ class GameComponent extends ReduxMixin(LitElement) {
 				</div>
 				<div class="game-details">
 					<h3>${this.game.name}</h3>
+					<div class="rating-placeholder">
+					</div>
 				</div>
 			</div>
 		`;
