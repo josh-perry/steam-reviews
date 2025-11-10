@@ -1,6 +1,5 @@
 import { LitElement, html, css } from 'lit';
 import { ReduxMixin } from '../store/ReduxMixin';
-import { startGame, getCurrentRoundData } from '../store/slices/gameStatusSlice';
 
 class App extends ReduxMixin(LitElement) {
 	static styles = css`
@@ -35,54 +34,9 @@ class App extends ReduxMixin(LitElement) {
 			min-height: 0;
 		}
 
-		.games-container {
-			display: flex;
-			gap: 2rem;
-			width: 100%;
-			max-width: 1200px;
-			justify-content: center;
-			align-items: stretch;
-		}
-
 		.loading {
 			font-size: 1.2rem;
 			color: #666;
-		}
-
-		.start-screen {
-			display: flex;
-			flex-direction: column;
-			align-items: center;
-			gap: 2rem;
-			text-align: center;
-		}
-
-		.start-screen h2 {
-			font-size: 2rem;
-			color: #333;
-			margin: 0;
-		}
-
-		.start-screen p {
-			font-size: 1.2rem;
-			color: #666;
-			max-width: 600px;
-			line-height: 1.6;
-		}
-
-		.start-button {
-			background: #007acc;
-			color: white;
-			border: none;
-			padding: 1rem 2rem;
-			font-size: 1.2rem;
-			border-radius: 8px;
-			cursor: pointer;
-			transition: background-color 0.3s ease;
-		}
-
-		.start-button:hover {
-			background: #005a9a;
 		}
 
 		footer {
@@ -98,13 +52,8 @@ class App extends ReduxMixin(LitElement) {
 		super.connectedCallback();
 	}
 
-	private handleStartGame() {
-		this.dispatch(startGame());
-	}
-
 	render() {
 		const { gameInProgress, gameComplete } = this.getState().gameStatus;
-		const currentRound = getCurrentRoundData(this.getState());
 
 		if (!gameInProgress && !gameComplete) {
 			return html`
@@ -113,13 +62,7 @@ class App extends ReduxMixin(LitElement) {
 				</header>
 				
 				<main>
-					<div class="start-screen">
-						<h2>which game is rated higher: the game</h2>
-						<p>pick the one with better review %</p>
-						<button class="start-button" @click=${this.handleStartGame}>
-							Start Game
-						</button>
-					</div>
+					<start-screen></start-screen>
 				</main>
 
 				<footer>steam review thing by josh</footer>
@@ -132,10 +75,7 @@ class App extends ReduxMixin(LitElement) {
 			</header>
 			
 			<main>
-				<div class="games-container">
-					<steam-game .game=${currentRound.gameA}></steam-game>
-					<steam-game .game=${currentRound.gameB}></steam-game>
-				</div>
+				<games-container></games-container>
 			</main>
 
 			<game-status></game-status>
