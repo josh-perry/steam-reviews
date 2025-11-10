@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import { apiService } from '../../services/api';
+import { apiService, GameRound as ApiGameRound } from '../../services/api';
 
 export interface Game {
 	id: number;
@@ -55,6 +55,17 @@ const initialState: GameStatusState = {
 	error: null,
 };
 
+export const fetchRounds = createAsyncThunk(
+	'gameStatus/fetchRounds',
+	async (_, { rejectWithValue }) => {
+		const response = await apiService.getRounds();
+		if (response.error) {
+			return rejectWithValue(response.error);
+		}
+		return response.data || [];
+	}
+);
+
 export const fetchGames = createAsyncThunk(
 	'gameStatus/fetchGames',
 	async (_, { rejectWithValue }) => {
@@ -68,53 +79,14 @@ export const fetchGames = createAsyncThunk(
 
 export const startGameWithData = createAsyncThunk(
 	'gameStatus/startGameWithData',
-	async (_, { dispatch, getState }) => {
-		const state = getState() as { gameStatus: GameStatusState };
-		
-		if (state.gameStatus.games.length === 0) {
-			const result = await dispatch(fetchGames());
-			if (fetchGames.rejected.match(result)) {
-				throw new Error(result.payload as string);
-			}
-			return result.payload as Game[];
+	async (_, { dispatch }) => {
+		const result = await dispatch(fetchRounds());
+		if (fetchRounds.rejected.match(result)) {
+			throw new Error(result.payload as string);
 		}
-		
-		return state.gameStatus.games;
+		return result.payload as ApiGameRound[];
 	}
 );
-
-const generateGameRounds = (games: Game[], totalRounds: number): GameRound[] => {
-	const rounds: GameRound[] = [];
-	
-	if (games.length < 2) {
-		return rounds;
-	}
-	
-	const shuffledGames = [...games].sort(() => 0.5 - Math.random());
-	let gameIndex = 0;
-	
-	for (let i = 0; i < totalRounds; i++) {
-		if (gameIndex + 1 >= shuffledGames.length) {
-			const remainingGames = shuffledGames.slice(gameIndex);
-			const newShuffled = [...games].filter(g => !remainingGames.includes(g)).sort(() => 0.5 - Math.random());
-			shuffledGames.splice(gameIndex, 0, ...newShuffled);
-		}
-		
-		const gameA = shuffledGames[gameIndex];
-		const gameB = shuffledGames[gameIndex + 1];
-		gameIndex += 2;
-		
-		const correctGame = gameA.rating! > gameB.rating! ? gameA : gameB;
-		
-		rounds.push({
-			gameA,
-			gameB,
-			correctGame
-		});
-	}
-	
-	return rounds;
-};
 
 export const getCurrentRoundData = (state: { gameStatus: GameStatusState }): GameRound | null => {
 	const { currentRound, preGeneratedRounds } = state.gameStatus;
@@ -185,6 +157,18 @@ const gameStatusSlice = createSlice({
 	},
 	extraReducers: (builder) => {
 		builder
+			.addCase(fetchRounds.pending, (state) => {
+				state.loading = true;
+				state.error = null;
+			})
+			.addCase(fetchRounds.fulfilled, (state, action) => {
+				state.loading = false;
+				state.error = null;
+			})
+			.addCase(fetchRounds.rejected, (state, action) => {
+				state.loading = false;
+				state.error = action.payload as string || 'Failed to fetch rounds';
+			})
 			.addCase(fetchGames.pending, (state) => {
 				state.loading = true;
 				state.error = null;
@@ -210,9 +194,8 @@ const gameStatusSlice = createSlice({
 				state.score = 0;
 				state.currentRoundAnswered = false;
 				state.showingResults = false;
-				state.games = action.payload;
 				
-				state.preGeneratedRounds = generateGameRounds(action.payload, state.totalRounds);
+				state.preGeneratedRounds = action.payload;
 				
 				state.roundResults = state.preGeneratedRounds.map((round) => ({
 					gameA: round.gameA,

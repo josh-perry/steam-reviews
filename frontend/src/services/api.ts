@@ -7,6 +7,12 @@ export interface ApiResponse<T> {
   error?: string;
 }
 
+export interface GameRound {
+  gameA: Game;
+  gameB: Game;
+  correctGame: Game;
+}
+
 class ApiService {
   private async fetchWithErrorHandling<T>(url: string): Promise<ApiResponse<T>> {
     try {
@@ -24,6 +30,10 @@ class ApiService {
         error: error instanceof Error ? error.message : 'An unknown error occurred' 
       };
     }
+  }
+
+  async getRounds(): Promise<ApiResponse<GameRound[]>> {
+    return this.fetchWithErrorHandling<GameRound[]>(`${API_BASE_URL}/rounds`);
   }
 
   async getGames(): Promise<ApiResponse<Game[]>> {
