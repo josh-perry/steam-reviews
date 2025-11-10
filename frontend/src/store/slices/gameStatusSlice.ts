@@ -52,7 +52,6 @@ const initialState: GameStatusState = {
 	error: null,
 };
 
-// Async thunk to fetch games from API
 export const fetchGames = createAsyncThunk(
 	'gameStatus/fetchGames',
 	async (_, { rejectWithValue }) => {
@@ -64,13 +63,11 @@ export const fetchGames = createAsyncThunk(
 	}
 );
 
-// Async thunk to start game (fetches games if needed)
 export const startGameWithData = createAsyncThunk(
 	'gameStatus/startGameWithData',
 	async (_, { dispatch, getState }) => {
 		const state = getState() as { gameStatus: GameStatusState };
 		
-		// If we don't have games data, fetch it first
 		if (state.gameStatus.games.length === 0) {
 			const result = await dispatch(fetchGames());
 			if (fetchGames.rejected.match(result)) {
@@ -90,10 +87,19 @@ const generateGameRounds = (games: Game[], totalRounds: number): GameRound[] => 
 		return rounds;
 	}
 	
+	const shuffledGames = [...games].sort(() => 0.5 - Math.random());
+	let gameIndex = 0;
+	
 	for (let i = 0; i < totalRounds; i++) {
-		const shuffled = [...games].sort(() => 0.5 - Math.random());
-		const gameA = shuffled[0];
-		const gameB = shuffled[1];
+		if (gameIndex + 1 >= shuffledGames.length) {
+			const remainingGames = shuffledGames.slice(gameIndex);
+			const newShuffled = [...games].filter(g => !remainingGames.includes(g)).sort(() => 0.5 - Math.random());
+			shuffledGames.splice(gameIndex, 0, ...newShuffled);
+		}
+		
+		const gameA = shuffledGames[gameIndex];
+		const gameB = shuffledGames[gameIndex + 1];
+		gameIndex += 2;
 		
 		const correctGame = gameA.rating! > gameB.rating! ? gameA : gameB;
 		
@@ -147,7 +153,7 @@ const gameStatusSlice = createSlice({
 		resetGame: (state) => {
 			return {
 				...initialState,
-				games: state.games, // Keep the fetched games data
+				games: state.games,
 			};
 		},
 		
@@ -161,7 +167,6 @@ const gameStatusSlice = createSlice({
 	},
 	extraReducers: (builder) => {
 		builder
-			// Fetch games cases
 			.addCase(fetchGames.pending, (state) => {
 				state.loading = true;
 				state.error = null;
@@ -175,7 +180,6 @@ const gameStatusSlice = createSlice({
 				state.loading = false;
 				state.error = action.payload as string || 'Failed to fetch games';
 			})
-			// Start game with data cases
 			.addCase(startGameWithData.pending, (state) => {
 				state.loading = true;
 				state.error = null;
