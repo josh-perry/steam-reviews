@@ -81,6 +81,8 @@ class App extends ReduxMixin(LitElement) {
 			<game-status></game-status>
 
 			<footer>steam review thing by josh</footer>
+
+			<game-results-modal></game-results-modal>
 		`;
 	}
 }
