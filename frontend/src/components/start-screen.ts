@@ -59,6 +59,12 @@ class StartScreen extends ReduxMixin(LitElement) {
 			color: #666;
 			font-style: italic;
 		}
+
+		.loading-details {
+			font-size: 0.9rem;
+			color: #888;
+			margin-top: 0.5rem;
+		}
 	`;
 
 	private handleStartGame() {
@@ -81,7 +87,7 @@ class StartScreen extends ReduxMixin(LitElement) {
 			` : ''}
 			
 			${loading ? html`
-				<div class="loading">Loading games data...</div>
+				<div class="loading">Loading games...</div>
 			` : ''}
 			
 			<button 

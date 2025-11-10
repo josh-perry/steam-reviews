@@ -1,11 +1,12 @@
 import { LitElement, html, css } from 'lit';
 import { ReduxMixin } from '../store/ReduxMixin';
 import { getCurrentRoundData, proceedToNextRound, showRoundResult } from '../store/slices/gameStatusSlice';
+import { ImagePreloader } from '../services/imagePreloader';
 
 class ReviewResults extends ReduxMixin(LitElement) {
 	private gameAPercentage = 0;
 	private gameBPercentage = 0;
-	private animationDuration = 1500; // 1.5 seconds
+	private animationDuration = 1500;
 	private animationComplete = false;
 
 	static styles = css`
@@ -120,10 +121,26 @@ class ReviewResults extends ReduxMixin(LitElement) {
 		super.connectedCallback();
 
 		this.startPercentageAnimations();
+		this.preloadNextRoundImages();
 
 		setTimeout(() => {
 			this.dispatch(proceedToNextRound());
 		}, 3000);
+	}
+
+	private async preloadNextRoundImages() {
+		const state = this.getState().gameStatus;
+		const nextRoundIndex = state.currentRound;
+		
+		if (nextRoundIndex < state.preGeneratedRounds.length) {
+			const nextRound = state.preGeneratedRounds[nextRoundIndex];
+			const imagePreloader = ImagePreloader.getInstance();
+			
+			await imagePreloader.preloadNextRoundImages([
+				nextRound.gameA.appId,
+				nextRound.gameB.appId
+			]);
+		}
 	}
 
 	private startPercentageAnimations() {

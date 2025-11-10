@@ -1,6 +1,5 @@
 import { Game } from '../store/slices/gameStatusSlice';
 
-// Use relative URL since webpack dev server will proxy /api requests to localhost:5000
 const API_BASE_URL = '/api';
 
 export interface ApiResponse<T> {
