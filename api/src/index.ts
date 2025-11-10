@@ -4,13 +4,15 @@ import dotenv from 'dotenv';
 import sqlite3 from 'sqlite3';
 import path from 'path';
 import fs from 'fs';
+import https from 'https';
+import { spawn } from 'child_process';
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const dbPath = path.join(__dirname, 'data', '202511_07_A3184.steam.sqlite');
-const roundsFilePath = path.join(__dirname, 'data', 'daily-rounds.json');
+const dbPath = path.join(__dirname, '..', 'data', 'games.sqlite');
+const roundsFilePath = path.join(__dirname, '..', 'data', 'daily-rounds.json');
 
 app.use(cors());
 app.use(express.json());
@@ -33,13 +35,137 @@ interface RoundsData {
     generatedDate: string;
 }
 
-const db = new sqlite3.Database(dbPath, (err) => {
-    if (err) {
-        console.error('Error opening database:', err.message);
-    } else {
-        console.log('Connected to SQLite database');
+const STEAM_DATABASE_URL = 'https://github.com/250/Steam-250/releases/download/snapshots/snapshots.tar.xz';
+
+const downloadFile = (url: string, destination: string): Promise<void> => {
+    return new Promise((resolve, reject) => {
+        const file = fs.createWriteStream(destination);
+        
+        https.get(url, (response) => {
+            if (response.statusCode === 302 || response.statusCode === 301) {
+                if (response.headers.location) {
+                    downloadFile(response.headers.location, destination)
+                        .then(resolve)
+                        .catch(reject);
+                    return;
+                }
+            }
+            
+            if (response.statusCode !== 200) {
+                reject(new Error(`HTTP ${response.statusCode}: ${response.statusMessage}`));
+                return;
+            }
+            
+            response.pipe(file);
+            
+            file.on('finish', () => {
+                file.close();
+                resolve();
+            });
+            
+            file.on('error', (err) => {
+                fs.unlink(destination, () => {});
+                reject(err);
+            });
+        }).on('error', (err) => {
+            reject(err);
+        });
+    });
+};
+
+const extractTarXz = (archivePath: string, extractDir: string): Promise<void> => {
+    return new Promise((resolve, reject) => {
+        const tar = spawn('tar', ['-xf', archivePath, '-C', extractDir]);
+        
+        tar.on('close', (code) => {
+            if (code === 0) {
+                resolve();
+            } else {
+                reject(new Error(`tar extraction failed with code ${code}`));
+            }
+        });
+        
+        tar.on('error', (err) => {
+            reject(err);
+        });
+    });
+};
+
+const downloadAndExtractDatabase = async (): Promise<void> => {
+    console.log('Downloading Steam database...');
+    
+    const dataDir = path.dirname(dbPath);
+    if (!fs.existsSync(dataDir)) {
+        fs.mkdirSync(dataDir, { recursive: true });
     }
-});
+    
+    const tempArchivePath = path.join(dataDir, 'snapshots.tar.xz');
+    const tempExtractDir = path.join(dataDir, 'temp_extract');
+    
+    try {
+        await downloadFile(STEAM_DATABASE_URL, tempArchivePath);
+        console.log('Download complete. Extracting archive...');
+        
+        if (!fs.existsSync(tempExtractDir)) {
+            fs.mkdirSync(tempExtractDir, { recursive: true });
+        }
+        
+        await extractTarXz(tempArchivePath, tempExtractDir);
+        
+        const extractedFiles = fs.readdirSync(tempExtractDir);
+        const sqliteFile = extractedFiles.find(file => file.endsWith('.sqlite'));
+        
+        if (!sqliteFile) {
+            throw new Error('No SQLite file found in extracted archive');
+        }
+        
+        const sourcePath = path.join(tempExtractDir, sqliteFile);
+        fs.copyFileSync(sourcePath, dbPath);
+        
+        console.log(`Database setup complete: ${sqliteFile} -> games.sqlite`);
+        
+        fs.rmSync(tempArchivePath);
+        fs.rmSync(tempExtractDir, { recursive: true });
+        
+    } catch (error) {
+        console.error('Error downloading/extracting database:', error);
+        
+        if (fs.existsSync(tempArchivePath)) {
+            fs.rmSync(tempArchivePath);
+        }
+        if (fs.existsSync(tempExtractDir)) {
+            fs.rmSync(tempExtractDir, { recursive: true });
+        }
+        
+        throw error;
+    }
+};
+
+const initializeDatabase = async (): Promise<void> => {
+    if (fs.existsSync(dbPath)) {
+        console.log('Database file exists, skipping download');
+        return;
+    }
+    
+    console.log('Database file not found, initializing...');
+    await downloadAndExtractDatabase();
+};
+
+let db: sqlite3.Database;
+
+const connectToDatabase = (): Promise<void> => {
+    return new Promise((resolve, reject) => {
+        db = new sqlite3.Database(dbPath, (err) => {
+            if (err) {
+                console.error('Error opening database:', err.message);
+                reject(err);
+            } else {
+                console.log('Connected to SQLite database');
+                resolve();
+            }
+        });
+    });
+};
 
 const isFileFromToday = (filePath: string): boolean => {
     try {
@@ -223,16 +349,32 @@ app.get('/api/games', async (req, res) => {
 });
 
 process.on('SIGINT', () => {
-    db.close((err) => {
-        if (err) {
-            console.error('Error closing database:', err.message);
-        } else {
-            console.log('Database connection closed');
-        }
+    if (db) {
+        db.close((err) => {
+            if (err) {
+                console.error('Error closing database:', err.message);
+            } else {
+                console.log('Database connection closed');
+            }
+            process.exit(0);
+        });
+    } else {
         process.exit(0);
-    });
+    }
 });
 
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-});
+const startServer = async (): Promise<void> => {
+    try {
+        await initializeDatabase();
+        await connectToDatabase();
+        
+        app.listen(PORT, () => {
+            console.log(`Server is running on port ${PORT}`);
+        });
+    } catch (error) {
+        console.error('Failed to start server:', error);
+        process.exit(1);
+    }
+};
+
+startServer();
