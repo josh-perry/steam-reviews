@@ -114,7 +114,7 @@ class GameResultsModal extends ReduxMixin(LitElement) {
 		}).join('');
 
 		const today = new Date().toISOString().split('T')[0];
-		const shareText = `${emojiResults} ${score}/${totalRounds} | ${today} | https://literallyjosh.com/steamthing`;
+		const shareText = `${emojiResults} ${score}/${totalRounds} | ${today} | http://things.literallyjosh.com:3000`;
 
 		await navigator.clipboard.writeText(shareText);
 		this.shareButtonText = 'Copied!';
