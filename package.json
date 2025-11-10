@@ -1,29 +1,23 @@
 {
-  "name": "steam-reviews",
+  "name": "steam-reviews-monorepo",
   "version": "1.0.0",
-  "description": "",
+  "description": "Steam Reviews Game",
+  "private": true,
   "scripts": {
-    "build": "webpack -c ./webpack.config.ts",
-    "watch": "webpack --watch -c ./webpack.config.ts"
+    "install:all": "npm install && npm --prefix frontend install && npm --prefix api install",
+    "dev": "concurrently \"npm run dev:api\" \"npm run dev:frontend\"",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "dev:api": "npm --prefix api run dev",
+    "build": "npm run build:api && npm run build:frontend",
+    "build:frontend": "npm --prefix frontend run build",
+    "build:api": "npm --prefix api run build",
+    "start": "npm --prefix api start"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
   "devDependencies": {
-    "@types/node": "^24.10.0",
-    "@types/webpack": "^5.28.5",
-    "html-webpack-plugin": "^5.6.4",
-    "ts-loader": "^9.5.4",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.9.3",
-    "webpack": "^5.102.1",
-    "webpack-cli": "^6.0.1"
+    "concurrently": "^8.2.2"
   },
-  "dependencies": {
-    "@reduxjs/toolkit": "^2.10.1",
-    "lit": "^3.3.1",
-    "react-redux": "^9.2.0",
-    "redux": "^5.0.1"
-  }
+  "workspaces": [
+    "frontend",
+    "api"
+  ]
 }

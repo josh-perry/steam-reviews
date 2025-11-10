@@ -1,0 +1,217 @@
+import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
+import { apiService } from '../../services/api';
+
+export interface Game {
+	id: number;
+	name: string;
+	appId: number;
+	rating: number;
+	reviewCount: number;
+}
+
+export interface RoundResult {
+	gameA: Game;
+	gameB: Game;
+	selectedGame: Game | null;
+	correctGame: Game;
+	isCorrect: boolean;
+	played: boolean;
+}
+
+export interface GameRound {
+	gameA: Game;
+	gameB: Game;
+	correctGame: Game;
+}
+
+interface GameStatusState {
+	currentRound: number;
+	totalRounds: number;
+	roundResults: RoundResult[];
+	preGeneratedRounds: GameRound[];
+	gameInProgress: boolean;
+	gameComplete: boolean;
+	score: number;
+	loading: boolean;
+	currentRoundAnswered: boolean;
+	games: Game[];
+	error: string | null;
+}
+
+const initialState: GameStatusState = {
+	currentRound: 0,
+	totalRounds: 10,
+	roundResults: [],
+	preGeneratedRounds: [],
+	gameInProgress: false,
+	gameComplete: false,
+	score: 0,
+	loading: false,
+	currentRoundAnswered: false,
+	games: [],
+	error: null,
+};
+
+// Async thunk to fetch games from API
+export const fetchGames = createAsyncThunk(
+	'gameStatus/fetchGames',
+	async (_, { rejectWithValue }) => {
+		const response = await apiService.getGames();
+		if (response.error) {
+			return rejectWithValue(response.error);
+		}
+		return response.data || [];
+	}
+);
+
+// Async thunk to start game (fetches games if needed)
+export const startGameWithData = createAsyncThunk(
+	'gameStatus/startGameWithData',
+	async (_, { dispatch, getState }) => {
+		const state = getState() as { gameStatus: GameStatusState };
+		
+		// If we don't have games data, fetch it first
+		if (state.gameStatus.games.length === 0) {
+			const result = await dispatch(fetchGames());
+			if (fetchGames.rejected.match(result)) {
+				throw new Error(result.payload as string);
+			}
+			return result.payload as Game[];
+		}
+		
+		return state.gameStatus.games;
+	}
+);
+
+const generateGameRounds = (games: Game[], totalRounds: number): GameRound[] => {
+	const rounds: GameRound[] = [];
+	
+	if (games.length < 2) {
+		return rounds;
+	}
+	
+	for (let i = 0; i < totalRounds; i++) {
+		const shuffled = [...games].sort(() => 0.5 - Math.random());
+		const gameA = shuffled[0];
+		const gameB = shuffled[1];
+		
+		const correctGame = gameA.rating! > gameB.rating! ? gameA : gameB;
+		
+		rounds.push({
+			gameA,
+			gameB,
+			correctGame
+		});
+	}
+	
+	return rounds;
+};
+
+export const getCurrentRoundData = (state: { gameStatus: GameStatusState }): GameRound | null => {
+	const { currentRound, preGeneratedRounds } = state.gameStatus;
+	return preGeneratedRounds[currentRound - 1] || null;
+};
+
+const gameStatusSlice = createSlice({
+	name: 'gameStatus',
+	initialState,
+	reducers: {
+		submitRoundAnswer: (state, action: PayloadAction<{ selectedGame: Game }>) => {
+			const { selectedGame } = action.payload;
+			const currentRoundIndex = state.currentRound - 1;
+			
+			state.currentRoundAnswered = true;
+			
+			if (currentRoundIndex >= 0 && currentRoundIndex < state.roundResults.length) {
+				const roundResult = state.roundResults[currentRoundIndex];
+				const isCorrect = selectedGame.appId === roundResult.correctGame.appId;
+				
+				roundResult.selectedGame = selectedGame;
+				roundResult.isCorrect = isCorrect;
+				roundResult.played = true;
+				
+				if (isCorrect) {
+					state.score += 1;
+				}
+				
+				if (state.currentRound >= state.totalRounds) {
+					state.gameComplete = true;
+					state.gameInProgress = false;
+				} else {
+					state.currentRound += 1;
+					state.currentRoundAnswered = false;
+				}
+			}
+		},
+		
+		resetGame: (state) => {
+			return {
+				...initialState,
+				games: state.games, // Keep the fetched games data
+			};
+		},
+		
+		setLoading: (state, action: PayloadAction<boolean>) => {
+			state.loading = action.payload;
+		},
+
+		clearError: (state) => {
+			state.error = null;
+		}
+	},
+	extraReducers: (builder) => {
+		builder
+			// Fetch games cases
+			.addCase(fetchGames.pending, (state) => {
+				state.loading = true;
+				state.error = null;
+			})
+			.addCase(fetchGames.fulfilled, (state, action) => {
+				state.loading = false;
+				state.games = action.payload;
+				state.error = null;
+			})
+			.addCase(fetchGames.rejected, (state, action) => {
+				state.loading = false;
+				state.error = action.payload as string || 'Failed to fetch games';
+			})
+			// Start game with data cases
+			.addCase(startGameWithData.pending, (state) => {
+				state.loading = true;
+				state.error = null;
+			})
+			.addCase(startGameWithData.fulfilled, (state, action) => {
+				state.loading = false;
+				state.gameInProgress = true;
+				state.gameComplete = false;
+				state.currentRound = 1;
+				state.score = 0;
+				state.currentRoundAnswered = false;
+				state.games = action.payload;
+				
+				state.preGeneratedRounds = generateGameRounds(action.payload, state.totalRounds);
+				
+				state.roundResults = state.preGeneratedRounds.map((round) => ({
+					gameA: round.gameA,
+					gameB: round.gameB,
+					selectedGame: null,
+					correctGame: round.correctGame,
+					isCorrect: false,
+					played: false
+				}));
+			})
+			.addCase(startGameWithData.rejected, (state, action) => {
+				state.loading = false;
+				state.error = action.error.message || 'Failed to start game';
+			});
+	}
+});
+
+export const { 
+	submitRoundAnswer, 
+	resetGame, 
+	setLoading,
+	clearError
+} = gameStatusSlice.actions;
+
+export default gameStatusSlice.reducer;

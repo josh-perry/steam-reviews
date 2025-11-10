@@ -1,12 +1,7 @@
-import path from 'path';
-import { fileURLToPath } from 'url';
-import HtmlWebpackPlugin from 'html-webpack-plugin';
-import { Configuration } from 'webpack';
+const path = require('path');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const config: Configuration = {
+module.exports = {
 	entry: './src/index.ts',
 	mode: 'development',
 	module: {
@@ -24,6 +19,7 @@ const config: Configuration = {
 	output: {
 		filename: 'bundle.js',
 		path: path.resolve(__dirname, 'dist'),
+		clean: true,
 	},
 	plugins: [
 		new HtmlWebpackPlugin({
@@ -31,10 +27,24 @@ const config: Configuration = {
 			filename: 'index.html'
 		})
 	],
+	devServer: {
+		static: {
+			directory: path.join(__dirname, 'dist'),
+		},
+		compress: true,
+		port: 3000,
+		hot: true,
+		open: true,
+		proxy: [
+			{
+				context: ['/api'],
+				target: 'http://localhost:5000',
+				changeOrigin: true,
+			}
+		]
+	},
 	optimization: {
 		usedExports: false,
 		sideEffects: false
 	}
 };
-
-export default config;
