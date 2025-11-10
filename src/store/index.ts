@@ -6,4 +6,4 @@ export { getState, dispatch, subscribeToStore, selectFromStore } from './hooks';
 
 export { ReduxMixin } from './ReduxMixin';
 
-export * from './slices/gamesSlice';
+export * from './slices/gameStatusSlice';

@@ -2,7 +2,7 @@ import { LitElement, html, css } from 'lit';
 import { property } from 'lit/decorators.js';
 import { ReduxMixin } from '../store/ReduxMixin';
 import { submitRoundAnswer } from '../store/slices/gameStatusSlice';
-import type { Game } from '../store/slices/gamesSlice';
+import type { Game } from '../store/slices/gameStatusSlice';
 
 class GameComponent extends ReduxMixin(LitElement) {
 	@property({ type: Object })
@@ -28,6 +28,20 @@ class GameComponent extends ReduxMixin(LitElement) {
 			border-color: #007acc;
 			transform: translateY(-2px);
 			box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+		}
+
+		:host(.disabled) {
+			cursor: not-allowed;
+			opacity: 0.6;
+			background-color: #f5f5f5;
+			border-color: #ddd;
+		}
+
+		:host(.disabled:hover) {
+			background-color: #f5f5f5;
+			border-color: #ddd;
+			transform: none;
+			box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 		}
 		
 		:host(.selected) {
@@ -83,14 +97,25 @@ class GameComponent extends ReduxMixin(LitElement) {
 	`;
 
 	private handleClick() {
-		const { gameInProgress } = this.getState().gameStatus;
+		const { gameInProgress, currentRoundAnswered } = this.getState().gameStatus;
 		
-		if (gameInProgress) {
+		// Only allow clicks if game is in progress and current round hasn't been answered
+		if (gameInProgress && !currentRoundAnswered) {
 			this.dispatch(submitRoundAnswer({ selectedGame: this.game }));
 		}
 	}
 
 	render() {
+		const { gameInProgress, currentRoundAnswered } = this.getState().gameStatus;
+		const isDisabled = !gameInProgress || currentRoundAnswered;
+		
+		// Add disabled class if buttons should be disabled
+		if (isDisabled) {
+			this.classList.add('disabled');
+		} else {
+			this.classList.remove('disabled');
+		}
+
 		const imageUrl = `https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/${this.game.appId}/header.jpg`;
 
 		return html`

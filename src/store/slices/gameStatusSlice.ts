@@ -1,6 +1,12 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-import { Game } from './gamesSlice'
+export interface Game {
+	id: number;
+	name: string;
+	appId: number;
+	rating: number;
+	reviewCount: number;
+}
 
 export interface RoundResult {
 	gameA: Game;
@@ -26,6 +32,7 @@ interface GameStatusState {
 	gameComplete: boolean;
 	score: number;
 	loading: boolean;
+	currentRoundAnswered: boolean;
 }
 
 const initialState: GameStatusState = {
@@ -37,6 +44,7 @@ const initialState: GameStatusState = {
 	gameComplete: false,
 	score: 0,
 	loading: false,
+	currentRoundAnswered: false,
 };
 
 const HARDCODED_GAMES: Game[] = [
@@ -125,11 +133,10 @@ const gameStatusSlice = createSlice({
 			state.gameComplete = false;
 			state.currentRound = 1;
 			state.score = 0;
+			state.currentRoundAnswered = false;
 			
-			// Generate all rounds upfront
 			state.preGeneratedRounds = generateGameRounds(state.totalRounds);
 			
-			// Initialize round results with placeholder data
 			state.roundResults = state.preGeneratedRounds.map((round) => ({
 				gameA: round.gameA,
 				gameB: round.gameB,
@@ -143,6 +150,8 @@ const gameStatusSlice = createSlice({
 		submitRoundAnswer: (state, action: PayloadAction<{ selectedGame: Game }>) => {
 			const { selectedGame } = action.payload;
 			const currentRoundIndex = state.currentRound - 1;
+			
+			state.currentRoundAnswered = true;
 			
 			if (currentRoundIndex >= 0 && currentRoundIndex < state.roundResults.length) {
 				const roundResult = state.roundResults[currentRoundIndex];
@@ -161,6 +170,7 @@ const gameStatusSlice = createSlice({
 					state.gameInProgress = false;
 				} else {
 					state.currentRound += 1;
+					state.currentRoundAnswered = false;
 				}
 			}
 		},
