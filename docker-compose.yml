@@ -12,7 +12,7 @@ services:
     ports:
       - "5000:5000"
     volumes:
-      - ./api/src/data:/app/src/data
+      - api-data:/app/data
     networks:
       - steam-reviews-network
       - nginx-proxy-manager_default

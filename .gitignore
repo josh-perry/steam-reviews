@@ -21,4 +21,5 @@ build/
 # IDE and editor files
 .vscode/
 
-api/src/data/*
+api/data/games.sqlite
+api/data/daily-rounds.json
