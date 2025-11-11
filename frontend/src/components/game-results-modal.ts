@@ -116,8 +116,17 @@ class GameResultsModal extends ReduxMixin(LitElement) {
 		const today = new Date().toISOString().split('T')[0];
 		const shareText = `${emojiResults} ${score}/${totalRounds} | ${today} | http://things.literallyjosh.com:3000`;
 
-		await navigator.clipboard.writeText(shareText);
-		this.shareButtonText = 'Copied!';
+		try {
+			await navigator.clipboard.writeText(shareText);
+			this.shareButtonText = 'Copied!';
+		}
+		catch (err) {
+			console.error('Failed to copy to clipboard:', err);
+			console.log(shareText);
+
+			this.shareButtonText = 'Failed to copy';
+		}
+
 		this.requestUpdate();
 	}
 
