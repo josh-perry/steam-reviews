@@ -6,7 +6,7 @@ import { ImagePreloader } from '../services/imagePreloader';
 class ReviewResults extends ReduxMixin(LitElement) {
 	private gameAPercentage = 0;
 	private gameBPercentage = 0;
-	private animationDuration = 1500;
+	private animationDuration = 750;
 	private animationComplete = false;
 
 	static styles = css`
