@@ -12,8 +12,7 @@ class GameComponent extends ReduxMixin(LitElement) {
 		:host {
 			display: flex;
 			flex: 1;
-			min-width: 300px;
-			max-width: 500px;
+			min-width: 0;
 			border: 2px solid #ccc;
 			padding: 2rem;
 			border-radius: 12px;
@@ -96,6 +95,7 @@ class GameComponent extends ReduxMixin(LitElement) {
 			margin: 0 0 1rem 0;
 			font-size: 1.5rem;
 			color: #333;
+			line-height: 1.2;
 		}
 
 		.rating-placeholder {
@@ -105,6 +105,46 @@ class GameComponent extends ReduxMixin(LitElement) {
 			justify-content: center;
 			align-items: center;
 			min-height: 80px;
+		}
+
+		@media (max-width: 768px) {
+			:host {
+				padding: 1.5rem;
+			}
+			
+			.game-image {
+				height: 160px;
+			}
+			
+			.game-details h3 {
+				font-size: 1.3rem;
+			}
+			
+			.game-details {
+				min-height: 120px;
+			}
+		}
+
+		@media (max-width: 480px) {
+			:host {
+				padding: 1rem;
+			}
+			
+			.game-image {
+				height: 140px;
+			}
+			
+			.game-details h3 {
+				font-size: 1.2rem;
+			}
+			
+			.game-details {
+				min-height: 100px;
+			}
+			
+			.rating-placeholder {
+				min-height: 60px;
+			}
 		}
 	`;
 

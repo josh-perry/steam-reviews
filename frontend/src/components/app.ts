@@ -22,6 +22,7 @@ class App extends ReduxMixin(LitElement) {
 
 		header h1 {
 			margin: 0;
+			font-size: 1.8rem;
 		}
 
 		main {
@@ -30,7 +31,7 @@ class App extends ReduxMixin(LitElement) {
 			flex-direction: column;
 			justify-content: center;
 			align-items: center;
-			padding: 0;
+			padding: 1rem;
 			min-height: 0;
 		}
 
@@ -46,6 +47,36 @@ class App extends ReduxMixin(LitElement) {
 			border-top: 1px solid #ddd;
 			flex-shrink: 0;
 		}
+
+		@media (max-width: 768px) {
+			header {
+				padding: 0.75rem 0;
+			}
+			
+			header h1 {
+				font-size: 1.5rem;
+				padding: 0 1rem;
+			}
+			
+			main {
+				padding: 0.5rem;
+			}
+			
+			footer {
+				padding: 0.75rem 0;
+				font-size: 0.9rem;
+			}
+		}
+
+		@media (max-width: 480px) {
+			header h1 {
+				font-size: 1.3rem;
+			}
+			
+			main {
+				padding: 0.25rem;
+			}
+		}
 	`;
 
 	connectedCallback() {
@@ -55,34 +86,23 @@ class App extends ReduxMixin(LitElement) {
 	render() {
 		const { gameInProgress, gameComplete } = this.getState().gameStatus;
 
-		if (!gameInProgress && !gameComplete) {
-			return html`
-				<header>
-					<h1>which is rated higher?</h1>
-				</header>
-				
-				<main>
-					<start-screen></start-screen>
-				</main>
-
-				<footer>steam review thing by josh</footer>
-			`;
-		}
-
 		return html`
 			<header>
 				<h1>which is rated higher?</h1>
 			</header>
 			
 			<main>
-				<games-container></games-container>
+				${!gameInProgress && !gameComplete 
+					? html`<start-screen></start-screen>`
+					: html`<games-container></games-container>`
+				}
 			</main>
 
-			<game-status></game-status>
+			${gameInProgress || gameComplete ? html`<game-status></game-status>` : ''}
 
 			<footer>steam review thing by josh</footer>
 
-			<game-results-modal></game-results-modal>
+			${gameInProgress || gameComplete ? html`<game-results-modal></game-results-modal>` : ''}
 		`;
 	}
 }

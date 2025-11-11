@@ -21,6 +21,7 @@ class GameResultsModal extends ReduxMixin(LitElement) {
 			z-index: 1000;
 			backdrop-filter: blur(4px);
 			pointer-events: auto;
+			padding: 1rem;
 		}
 
 		.modal {
@@ -32,6 +33,8 @@ class GameResultsModal extends ReduxMixin(LitElement) {
 			text-align: center;
 			box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
 			animation: modalSlideIn 0.3s ease-out;
+			max-height: 90vh;
+			overflow-y: auto;
 		}
 
 		@keyframes modalSlideIn {
@@ -63,6 +66,7 @@ class GameResultsModal extends ReduxMixin(LitElement) {
 			gap: 1rem;
 			justify-content: center;
 			margin-top: 2rem;
+			flex-wrap: wrap;
 		}
 
 		.button {
@@ -72,6 +76,7 @@ class GameResultsModal extends ReduxMixin(LitElement) {
 			border-radius: 8px;
 			cursor: pointer;
 			transition: all 0.3s ease;
+			min-width: 120px;
 		}
 
 		.close-button {
@@ -96,6 +101,62 @@ class GameResultsModal extends ReduxMixin(LitElement) {
 
 		.share-button.copied {
 			background: #17a2b8;
+		}
+
+		@media (max-width: 768px) {
+			:host(.visible) {
+				padding: 0.5rem;
+			}
+			
+			.modal {
+				padding: 2rem 1.5rem;
+				width: 95%;
+				border-radius: 12px;
+			}
+			
+			.modal h2 {
+				font-size: 2rem;
+			}
+			
+			.score-display {
+				font-size: 2.5rem;
+			}
+			
+			.modal-buttons {
+				gap: 0.75rem;
+				margin-top: 1.5rem;
+			}
+			
+			.button {
+				padding: 0.875rem 1.5rem;
+				font-size: 1rem;
+				min-width: 100px;
+			}
+		}
+
+		@media (max-width: 480px) {
+			.modal {
+				padding: 1.5rem 1rem;
+			}
+			
+			.modal h2 {
+				font-size: 1.75rem;
+			}
+			
+			.score-display {
+				font-size: 2rem;
+			}
+			
+			.modal-buttons {
+				flex-direction: column;
+				gap: 0.5rem;
+			}
+			
+			.button {
+				padding: 0.75rem 1rem;
+				width: 100%;
+				min-width: 0;
+			}
 		}
 	`;
 

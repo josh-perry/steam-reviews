@@ -45,6 +45,30 @@ class RoundIndicators extends LitElement {
             background: #f9f9f9;
             border-color: #e0e0e0;
         }
+
+        @media (max-width: 768px) {
+            .rounds-display {
+                gap: 0.375rem;
+            }
+            
+            .round-indicator {
+                width: 28px;
+                height: 28px;
+                border-width: 1.5px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .rounds-display {
+                gap: 0.25rem;
+            }
+            
+            .round-indicator {
+                width: 24px;
+                height: 24px;
+                border-width: 1px;
+            }
+        }
     `;
 
     render() {

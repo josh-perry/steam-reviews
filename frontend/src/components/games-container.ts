@@ -11,6 +11,24 @@ class GamesContainer extends ReduxMixin(LitElement) {
 			max-width: 1200px;
 			justify-content: center;
 			align-items: stretch;
+			padding: 0 1rem;
+			box-sizing: border-box;
+		}
+
+		@media (max-width: 768px) {
+			:host {
+				flex-direction: column;
+				gap: 1.5rem;
+				max-width: 500px;
+				padding: 0 1rem;
+			}
+		}
+
+		@media (max-width: 480px) {
+			:host {
+				gap: 1rem;
+				padding: 0 0.75rem;
+			}
 		}
 	`;
 

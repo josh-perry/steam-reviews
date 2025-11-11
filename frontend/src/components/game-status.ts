@@ -34,6 +34,34 @@ class GameStatus extends ReduxMixin(LitElement) {
             font-weight: bold;
             color: #007acc;
         }
+
+        @media (max-width: 768px) {
+            :host {
+                padding: 0.75rem;
+            }
+            
+            .status-container {
+                padding: 1rem 1.5rem;
+                min-width: 0;
+                width: 100%;
+                max-width: 400px;
+            }
+            
+            .score-info {
+                font-size: 0.9rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            :host {
+                padding: 0.5rem;
+            }
+            
+            .status-container {
+                padding: 0.75rem 1rem;
+                border-radius: 12px;
+            }
+        }
     `;
 
     connectedCallback() {

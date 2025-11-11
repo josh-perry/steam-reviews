@@ -17,13 +17,30 @@ class ReviewResults extends ReduxMixin(LitElement) {
 			max-width: 1200px;
 			justify-content: center;
 			align-items: stretch;
+			padding: 0 1rem;
+			box-sizing: border-box;
+		}
+
+		@media (max-width: 768px) {
+			:host {
+				flex-direction: column;
+				gap: 1.5rem;
+				max-width: 500px;
+				padding: 0 1rem;
+			}
+		}
+
+		@media (max-width: 480px) {
+			:host {
+				gap: 1rem;
+				padding: 0 0.75rem;
+			}
 		}
 
 		.game-result {
 			display: flex;
 			flex: 1;
-			min-width: 300px;
-			max-width: 500px;
+			min-width: 0;
 			border: 2px solid #ccc;
 			padding: 2rem;
 			border-radius: 12px;
@@ -33,6 +50,7 @@ class ReviewResults extends ReduxMixin(LitElement) {
 			align-items: center;
 			text-align: center;
 			gap: 1rem;
+			box-sizing: border-box;
 		}
 
 		.game-result.correct {
@@ -78,7 +96,7 @@ class ReviewResults extends ReduxMixin(LitElement) {
 
 		.game-details {
 			width: 100%;
-			min-height: 140px; /* Reserve space for title + rating info + result indicator */
+			min-height: 140px;
 			display: flex;
 			flex-direction: column;
 		}
@@ -87,6 +105,7 @@ class ReviewResults extends ReduxMixin(LitElement) {
 			margin: 0 0 1rem 0;
 			font-size: 1.5rem;
 			color: #333;
+			line-height: 1.2;
 		}
 
 		.rating-display {
@@ -114,6 +133,54 @@ class ReviewResults extends ReduxMixin(LitElement) {
 
 		.result-indicator.incorrect {
 			color: #dc3545;
+		}
+
+		@media (max-width: 768px) {
+			.game-result {
+				padding: 1.5rem;
+			}
+			
+			.game-image {
+				height: 160px;
+			}
+			
+			.game-details h3 {
+				font-size: 1.3rem;
+			}
+			
+			.game-details {
+				min-height: 120px;
+			}
+			
+			.rating-display {
+				font-size: 1.8rem;
+			}
+		}
+
+		@media (max-width: 480px) {
+			.game-result {
+				padding: 1rem;
+			}
+			
+			.game-image {
+				height: 140px;
+			}
+			
+			.game-details h3 {
+				font-size: 1.2rem;
+			}
+			
+			.game-details {
+				min-height: 100px;
+			}
+			
+			.rating-display {
+				font-size: 1.6rem;
+			}
+			
+			.result-indicator {
+				font-size: 1.1rem;
+			}
 		}
 	`;
 

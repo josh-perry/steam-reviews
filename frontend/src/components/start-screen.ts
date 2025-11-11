@@ -10,12 +10,16 @@ class StartScreen extends ReduxMixin(LitElement) {
 			align-items: center;
 			gap: 2rem;
 			text-align: center;
+			padding: 1rem;
+			width: 100%;
+			max-width: 600px;
 		}
 
 		h2 {
 			font-size: 2rem;
 			color: #333;
 			margin: 0;
+			line-height: 1.2;
 		}
 
 		p {
@@ -23,6 +27,7 @@ class StartScreen extends ReduxMixin(LitElement) {
 			color: #666;
 			max-width: 600px;
 			line-height: 1.6;
+			margin: 0;
 		}
 
 		.start-button {
@@ -53,6 +58,7 @@ class StartScreen extends ReduxMixin(LitElement) {
 			border-radius: 8px;
 			border: 1px solid #ffcdd2;
 			max-width: 500px;
+			width: 100%;
 		}
 
 		.loading {
@@ -64,6 +70,53 @@ class StartScreen extends ReduxMixin(LitElement) {
 			font-size: 0.9rem;
 			color: #888;
 			margin-top: 0.5rem;
+		}
+
+		@media (max-width: 768px) {
+			:host {
+				gap: 1.5rem;
+				padding: 0.75rem;
+			}
+			
+			h2 {
+				font-size: 1.75rem;
+			}
+			
+			p {
+				font-size: 1.1rem;
+			}
+			
+			.start-button {
+				padding: 0.875rem 1.75rem;
+				font-size: 1.1rem;
+				width: 100%;
+				max-width: 250px;
+			}
+			
+			.error {
+				padding: 0.875rem;
+				font-size: 0.9rem;
+			}
+		}
+
+		@media (max-width: 480px) {
+			:host {
+				gap: 1rem;
+				padding: 0.5rem;
+			}
+			
+			h2 {
+				font-size: 1.5rem;
+			}
+			
+			p {
+				font-size: 1rem;
+			}
+			
+			.start-button {
+				padding: 0.75rem 1.5rem;
+				font-size: 1rem;
+			}
 		}
 	`;
 
