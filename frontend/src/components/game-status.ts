@@ -1,11 +1,7 @@
 import { LitElement, html, css } from 'lit';
-import { property } from 'lit/decorators.js';
 import { ReduxMixin } from '../store/ReduxMixin';
 
 class GameStatus extends ReduxMixin(LitElement) {
-    @property({ type: Object })
-    declare gameStatus: any;
-
     static styles = css`
         :host {
             display: flex;
@@ -64,18 +60,8 @@ class GameStatus extends ReduxMixin(LitElement) {
         }
     `;
 
-    connectedCallback() {
-        super.connectedCallback();
-        this.gameStatus = this.getState().gameStatus;
-    }
-
-    updated() {
-        this.gameStatus = this.getState().gameStatus;
-    }
-
     render() {
-        const state = this.getState();
-        const gameStatus = state.gameStatus;
+        const gameStatus = this.getState().gameStatus;
 
         if (!gameStatus || !gameStatus.gameInProgress) {
             return html``;
