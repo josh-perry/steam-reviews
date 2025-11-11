@@ -15,7 +15,7 @@ class App extends ReduxMixin(LitElement) {
 		header {
 			background: #1e1e1e;
 			color: white;
-			padding: 1rem;
+			padding: 1rem 0;
 			text-align: center;
 			flex-shrink: 0;
 		}
@@ -30,7 +30,7 @@ class App extends ReduxMixin(LitElement) {
 			flex-direction: column;
 			justify-content: center;
 			align-items: center;
-			padding: 1rem;
+			padding: 0;
 			min-height: 0;
 		}
 
@@ -41,7 +41,7 @@ class App extends ReduxMixin(LitElement) {
 
 		footer {
 			background: #f5f5f5;
-			padding: 1rem;
+			padding: 1rem 0;
 			text-align: center;
 			border-top: 1px solid #ddd;
 			flex-shrink: 0;
