@@ -249,7 +249,13 @@ const transformDatabaseRow = (row: any): Game => ({
 
 const fetchGamesFromDatabase = (): Promise<Game[]> => {
     return new Promise((resolve, reject) => {
-        const query = 'SELECT * FROM app WHERE adult = 0 AND total_reviews > 5000 ORDER BY RANDOM() LIMIT 25';
+        const seed = getDailySeed();
+        const query = `
+            SELECT * FROM app 
+            WHERE adult = 0 AND total_reviews > 5000 
+            ORDER BY (((id * ${seed}) % 982451653) + ((total_reviews * ${seed}) % 982451653)) % 982451653
+            LIMIT 20
+        `;
         
         db.all(query, [], (err, rows) => {
             if (err) {
