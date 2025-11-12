@@ -206,7 +206,7 @@ class GameResultsModal extends ReduxMixin(LitElement) {
 			return r.isCorrect ? '🟩' : '🟥';
 		}).join('');
 
-		const shareText = `${this.getEmojiForScore(displayScore)} ${emojiResults} ${displayScore}/${totalRounds} | ${dailyDate} | http://steam.literallyjosh.com`;
+		const shareText = `${this.getEmojiForScore(displayScore)} ${emojiResults} ${displayScore}/${totalRounds} | ${dailyDate} | https://steam.literallyjosh.com`;
 
 		try {
 			await navigator.clipboard.writeText(shareText);
