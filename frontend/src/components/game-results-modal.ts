@@ -1,6 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import { ReduxMixin } from '../store/ReduxMixin';
-import { resetGame } from '../store/slices/gameStatusSlice';
+import { getTodaysResult } from '../services/localSave';
 
 class GameResultsModal extends ReduxMixin(LitElement) {
 	static styles = css`
@@ -162,20 +162,23 @@ class GameResultsModal extends ReduxMixin(LitElement) {
 
 	private shareButtonText = 'Share Results';
 
-	private handleClose() {
-		this.dispatch(resetGame());
-	}
-
 	private async handleShare() {
-		const { roundResults, score, totalRounds } = this.getState().gameStatus;
+		const { gameComplete, totalRounds } = this.getState().gameStatus;
         const { dailyDate } = this.getState().date;
 		
-		const emojiResults = roundResults.map(r => {
+		const todayResult = dailyDate ? getTodaysResult(dailyDate) : null;
+		const displayScore = todayResult ? todayResult.numberCorrect : this.getState().gameStatus.score;
+		const displayRoundResults = todayResult ? todayResult.roundResults : this.getState().gameStatus.roundResults;
+		
+		const emojiResults = displayRoundResults.map(r => {
+			if (typeof r === 'boolean') {
+				return r ? '🟩' : '🟥';
+			}
 			if (!r.played) return '⬛';
 			return r.isCorrect ? '🟩' : '🟥';
 		}).join('');
 
-		const shareText = `${this.getEmojiForScore(score)} ${emojiResults} ${score}/${totalRounds} | ${dailyDate} | http://steam.literallyjosh.com`;
+		const shareText = `${this.getEmojiForScore(displayScore)} ${emojiResults} ${displayScore}/${totalRounds} | ${dailyDate} | http://steam.literallyjosh.com`;
 
 		try {
 			await navigator.clipboard.writeText(shareText);
@@ -227,36 +230,41 @@ class GameResultsModal extends ReduxMixin(LitElement) {
 		const { gameComplete, score, totalRounds, roundResults } = this.getState().gameStatus;
         const { dailyDate } = this.getState().date;
 
-		if (gameComplete) {
+		const todayResult = dailyDate ? getTodaysResult(dailyDate) : null;
+		const shouldShow = gameComplete || todayResult !== null;
+		
+		if (shouldShow) {
 			this.classList.add('visible');
 		} else {
 			this.classList.remove('visible');
 		}
 
-		if (!gameComplete) {
+		if (!shouldShow) {
 			return html``;
 		}
+
+		const displayScore = todayResult ? todayResult.numberCorrect : score;
+		const displayRoundResults = todayResult ? todayResult.roundResults : roundResults;
 
 		return html`
 			<div class="modal" @click=${(e: Event) => e.stopPropagation()}>
 				<h2>${dailyDate}</h2>
-				<div class="score-display">${score}/${totalRounds}</div>
+				<div class="score-display">${displayScore}/${totalRounds}</div>
 				
-				<results-summary 
-					.roundResults=${roundResults}>
-				</results-summary>
+				${(gameComplete || todayResult) ? html`
+					<results-summary 
+						.roundResults=${displayRoundResults}>
+					</results-summary>
+				` : ''}
 
 				<div>
-					${this.getMessageForScore(score)}
-					${this.getEmojiForScore(score)}
+					${this.getMessageForScore(displayScore)}
+					${this.getEmojiForScore(displayScore)}
 				</div>
 				
 				<div class="modal-buttons">
 					<button class="button share-button ${this.shareButtonText === 'Copied!' ? 'copied' : ''}" @click=${this.handleShare}>
 						${this.shareButtonText}
-					</button>
-					<button class="button close-button" @click=${this.handleClose}>
-						Back to Start
 					</button>
 				</div>
 			</div>

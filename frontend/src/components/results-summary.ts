@@ -4,7 +4,7 @@ import type { RoundResult } from '../store/slices/gameStatusSlice';
 
 class ResultsSummary extends LitElement {
     @property({ type: Array })
-    declare roundResults: RoundResult[];
+    declare roundResults: RoundResult[] | boolean[];
 
     static styles = css`
         :host {
@@ -33,6 +33,10 @@ class ResultsSummary extends LitElement {
         }
 
         const emojiString = this.roundResults.map((r, _) => {
+            if (typeof r === 'boolean') {
+                return r ? '🟩' : '🟥';
+            }
+            
             let emoji = '⬛';
             
             if (r.played) {

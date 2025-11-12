@@ -1,6 +1,7 @@
 import { LitElement, html, css } from 'lit';
 import { ReduxMixin } from '../store/ReduxMixin';
 import { startGameWithData, clearError } from '../store/slices/gameStatusSlice';
+import { hasPlayedToday } from '../services/localSave';
 
 class StartScreen extends ReduxMixin(LitElement) {
 	static styles = css`
@@ -127,6 +128,8 @@ class StartScreen extends ReduxMixin(LitElement) {
 
 	render() {
 		const { loading, error } = this.getState().gameStatus;
+		const { dailyDate } = this.getState().date;
+		const playedToday = dailyDate && hasPlayedToday(dailyDate);
 
 		return html`
 			<h2>which game is rated higher: the game</h2>
@@ -142,14 +145,18 @@ class StartScreen extends ReduxMixin(LitElement) {
 			${loading ? html`
 				<div class="loading">Loading games...</div>
 			` : ''}
-			
-			<button 
+
+			<button
 				class="start-button" 
 				@click=${this.handleStartGame}
-				?disabled=${loading}
+				?disabled=${loading || playedToday}
 			>
 				${loading ? 'Loading...' : 'Start Game'}
 			</button>
+
+			${playedToday ? html`
+				<game-results-modal></game-results-modal>
+			` : ''}
 		`;
 	}
 }
