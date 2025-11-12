@@ -318,17 +318,6 @@ const getRounds = async (): Promise<GameRound[]> => {
     return await generateAndSaveRounds();
 };
 
-const extractUniqueGames = (rounds: GameRound[]): Game[] => {
-    const gamesMap = new Map<number, Game>();
-    
-    rounds.forEach(round => {
-        gamesMap.set(round.gameA.appId, round.gameA);
-        gamesMap.set(round.gameB.appId, round.gameB);
-    });
-    
-    return Array.from(gamesMap.values());
-};
-
 app.get('/api/health', (req, res) => {
     res.json({ status: 'OK', message: 'Steam Reviews API is running' });
 });
@@ -349,17 +338,6 @@ app.get('/api/rounds', async (req, res) => {
     } catch (error) {
         console.error('Error serving rounds:', error);
         res.status(500).json({ error: 'Failed to generate game rounds' });
-    }
-});
-
-app.get('/api/games', async (req, res) => {
-    try {
-        const rounds = await getRounds();
-        const games = extractUniqueGames(rounds);
-        res.json(games);
-    } catch (error) {
-        console.error('Error serving games:', error);
-        res.status(500).json({ error: 'Failed to fetch games from database' });
     }
 });
 

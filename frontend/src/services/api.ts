@@ -36,10 +36,6 @@ class ApiService {
     return this.fetchWithErrorHandling<GameRound[]>(`${API_BASE_URL}/rounds`);
   }
 
-  async getGames(): Promise<ApiResponse<Game[]>> {
-    return this.fetchWithErrorHandling<Game[]>(`${API_BASE_URL}/games`);
-  }
-
   async healthCheck(): Promise<ApiResponse<{ status: string; message: string }>> {
     return this.fetchWithErrorHandling(`${API_BASE_URL}/health`);
   }

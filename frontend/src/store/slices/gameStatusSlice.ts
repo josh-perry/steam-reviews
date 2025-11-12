@@ -36,7 +36,6 @@ interface GameStatusState {
 	loading: boolean;
 	currentRoundAnswered: boolean;
 	showingResults: boolean;
-	games: Game[];
 	error: string | null;
 }
 
@@ -51,7 +50,6 @@ const initialState: GameStatusState = {
 	loading: false,
 	currentRoundAnswered: false,
 	showingResults: false,
-	games: [],
 	error: null,
 };
 
@@ -59,17 +57,6 @@ export const fetchRounds = createAsyncThunk(
 	'gameStatus/fetchRounds',
 	async (_, { rejectWithValue }) => {
 		const response = await apiService.getRounds();
-		if (response.error) {
-			return rejectWithValue(response.error);
-		}
-		return response.data || [];
-	}
-);
-
-export const fetchGames = createAsyncThunk(
-	'gameStatus/fetchGames',
-	async (_, { rejectWithValue }) => {
-		const response = await apiService.getGames();
 		if (response.error) {
 			return rejectWithValue(response.error);
 		}
@@ -141,10 +128,7 @@ const gameStatusSlice = createSlice({
 		},
 		
 		resetGame: (state) => {
-			return {
-				...initialState,
-				games: state.games,
-			};
+			return initialState;
 		},
 		
 		setLoading: (state, action: PayloadAction<boolean>) => {
@@ -168,19 +152,6 @@ const gameStatusSlice = createSlice({
 			.addCase(fetchRounds.rejected, (state, action) => {
 				state.loading = false;
 				state.error = action.payload as string || 'Failed to fetch rounds';
-			})
-			.addCase(fetchGames.pending, (state) => {
-				state.loading = true;
-				state.error = null;
-			})
-			.addCase(fetchGames.fulfilled, (state, action) => {
-				state.loading = false;
-				state.games = action.payload;
-				state.error = null;
-			})
-			.addCase(fetchGames.rejected, (state, action) => {
-				state.loading = false;
-				state.error = action.payload as string || 'Failed to fetch games';
 			})
 			.addCase(startGameWithData.pending, (state) => {
 				state.loading = true;
