@@ -34,7 +34,6 @@ interface GameRound {
 
 interface RoundsData {
     rounds: GameRound[];
-    generatedDate: string;
 }
 
 const STEAM_DATABASE_URL = 'https://github.com/250/Steam-250/releases/download/snapshots/snapshots.tar.xz';
@@ -272,8 +271,7 @@ const fetchGamesFromDatabase = (): Promise<Game[]> => {
 
 const saveRoundsToFile = (rounds: GameRound[]): void => {
     const roundsData: RoundsData = {
-        rounds,
-        generatedDate: new Date().toISOString()
+        rounds
     };
     
     const dataDir = path.dirname(roundsFilePath);
@@ -333,6 +331,15 @@ const extractUniqueGames = (rounds: GameRound[]): Game[] => {
 
 app.get('/api/health', (req, res) => {
     res.json({ status: 'OK', message: 'Steam Reviews API is running' });
+});
+
+app.get('/api/date', async (req, res) => {
+    try {
+        res.json({ dailyDate: new Date().toISOString() });
+    } catch (error) {
+        console.error('Error serving date:', error);
+        res.status(500).json({ error: 'Failed to get generated date' });
+    }
 });
 
 app.get('/api/rounds', async (req, res) => {

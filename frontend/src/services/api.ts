@@ -17,17 +17,17 @@ class ApiService {
   private async fetchWithErrorHandling<T>(url: string): Promise<ApiResponse<T>> {
     try {
       const response = await fetch(url);
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       const data = await response.json();
       return { data };
     } catch (error) {
       console.error('API Error:', error);
-      return { 
-        error: error instanceof Error ? error.message : 'An unknown error occurred' 
+      return {
+        error: error instanceof Error ? error.message : 'An unknown error occurred'
       };
     }
   }
@@ -42,6 +42,22 @@ class ApiService {
 
   async healthCheck(): Promise<ApiResponse<{ status: string; message: string }>> {
     return this.fetchWithErrorHandling(`${API_BASE_URL}/health`);
+  }
+
+  async getDailyDate(): Promise<ApiResponse<{ dailyDate: Date }>> {
+    const response = await this.fetchWithErrorHandling<{ dailyDate: string }>(`${API_BASE_URL}/date`);
+    
+    if (response.data) {
+      return {
+        data: {
+          dailyDate: new Date(response.data.dailyDate)
+        }
+      };
+    }
+    
+    return {
+      error: response.error
+    };
   }
 }
 
