@@ -20,11 +20,17 @@ module.exports = {
 		filename: 'bundle.js',
 		path: path.resolve(__dirname, 'dist'),
 		clean: true,
+		charset: true
 	},
 	plugins: [
 		new HtmlWebpackPlugin({
 			template: './src/index.html',
-			filename: 'index.html'
+			filename: 'index.html',
+			inject: 'body',
+			scriptLoading: 'defer',
+			meta: {
+				charset: 'UTF-8'
+			}
 		})
 	],
 	devServer: {
