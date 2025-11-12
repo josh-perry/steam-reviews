@@ -127,10 +127,6 @@ const gameStatusSlice = createSlice({
 			}
 		},
 		
-		resetGame: (state) => {
-			return initialState;
-		},
-		
 		setLoading: (state, action: PayloadAction<boolean>) => {
 			state.loading = action.payload;
 		},
@@ -189,7 +185,6 @@ export const {
 	submitRoundAnswer,
 	showRoundResult,
 	proceedToNextRound,
-	resetGame, 
 	setLoading,
 	clearError
 } = gameStatusSlice.actions;
