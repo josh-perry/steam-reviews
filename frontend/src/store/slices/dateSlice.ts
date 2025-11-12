@@ -2,7 +2,7 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { apiService } from '../../services/api';
 
 interface DateState {
-    dailyDate: Date | null;
+    dailyDate: string | null;
     loading: boolean;
     error: string | null;
 }
@@ -40,7 +40,7 @@ const dateSlice = createSlice({
             })
             .addCase(fetchDailyDate.fulfilled, (state, action) => {
                 state.loading = false;
-                state.dailyDate = action.payload;
+                state.dailyDate = action.payload ? action.payload.toISOString().split('T')[0] : null;
                 state.error = null;
             })
             .addCase(fetchDailyDate.rejected, (state, action) => {

@@ -1,5 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import { ReduxMixin } from '../store/ReduxMixin';
+import { fetchDailyDate } from '../store/slices/dateSlice';
 
 class App extends ReduxMixin(LitElement) {
 	static styles = css`
@@ -15,14 +16,21 @@ class App extends ReduxMixin(LitElement) {
 		header {
 			background: #1e1e1e;
 			color: white;
-			padding: 1rem 0;
-			text-align: center;
+			padding: 1rem;
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
 			flex-shrink: 0;
 		}
 
-		header h1 {
+		header h1, header .current-day {
 			margin: 0;
 			font-size: 1.8rem;
+		}
+
+		header h1 a {
+			text-decoration: none;
+			color: white;
 		}
 
 		main {
@@ -50,14 +58,13 @@ class App extends ReduxMixin(LitElement) {
 
 		@media (max-width: 768px) {
 			header {
-				padding: 0.75rem 0;
+				padding: 0.75rem;
 			}
 			
-			header h1 {
+			header h1, header .current-day {
 				font-size: 1.5rem;
-				padding: 0 1rem;
 			}
-			
+
 			main {
 				padding: 0.5rem;
 			}
@@ -69,10 +76,10 @@ class App extends ReduxMixin(LitElement) {
 		}
 
 		@media (max-width: 480px) {
-			header h1 {
+			header h1, header .current-day {
 				font-size: 1.3rem;
 			}
-			
+
 			main {
 				padding: 0.25rem;
 			}
@@ -81,14 +88,20 @@ class App extends ReduxMixin(LitElement) {
 
 	connectedCallback() {
 		super.connectedCallback();
+		this.dispatch(fetchDailyDate());
 	}
 
 	render() {
 		const { gameInProgress, gameComplete } = this.getState().gameStatus;
+		const { dailyDate } = this.getState().date;
 
 		return html`
 			<header>
-				<h1>which is rated higher?</h1>
+				<h1>
+					<a href="/">which is rated higher?</a>
+				</h1>
+
+				<div class="current-day">${dailyDate}</div>
 			</header>
 			
 			<main>
