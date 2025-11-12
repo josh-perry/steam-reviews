@@ -1,5 +1,7 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { apiService, GameRound as ApiGameRound } from '../../services/api';
+import { clearOldProgress } from '../../services/localSave';
+import type { RootState } from '../store';
 
 export interface Game {
 	id: number;
@@ -66,11 +68,19 @@ export const fetchRounds = createAsyncThunk(
 
 export const startGameWithData = createAsyncThunk(
 	'gameStatus/startGameWithData',
-	async (_, { dispatch }) => {
+	async (_, { dispatch, getState }) => {
 		const result = await dispatch(fetchRounds());
 		if (fetchRounds.rejected.match(result)) {
 			throw new Error(result.payload as string);
 		}
+		
+		const state = getState() as RootState;
+		const dailyDate = state.date.dailyDate;
+		
+		if (dailyDate) {
+			clearOldProgress(dailyDate);
+		}
+		
 		return result.payload as ApiGameRound[];
 	}
 );
@@ -127,6 +137,41 @@ const gameStatusSlice = createSlice({
 			}
 		},
 		
+		restoreProgress: (state, action: PayloadAction<{
+			score: number;
+			currentRound: number;
+			roundResults: Array<{
+				gameAId: number;
+				gameBId: number;
+				selectedGameId: number;
+				correctGameId: number;
+				isCorrect: boolean;
+			}>;
+		}>) => {
+			const { score, currentRound, roundResults: savedRoundResults } = action.payload;
+			
+			state.score = score;
+			state.currentRound = currentRound;
+			state.gameInProgress = true;
+			state.gameComplete = false;
+			state.currentRoundAnswered = false;
+			state.showingResults = false;
+			
+			savedRoundResults.forEach((savedRound, index) => {
+				if (index < state.roundResults.length) {
+					const roundResult = state.roundResults[index];
+					if (savedRound.selectedGameId) {
+						roundResult.selectedGame = savedRound.selectedGameId === roundResult.gameA.appId 
+							? roundResult.gameA 
+							: roundResult.gameB;
+						roundResult.isCorrect = savedRound.isCorrect;
+						roundResult.played = true;
+						roundResult.resultVisible = true;
+					}
+				}
+			});
+		},
+		
 		setLoading: (state, action: PayloadAction<boolean>) => {
 			state.loading = action.payload;
 		},
@@ -144,6 +189,17 @@ const gameStatusSlice = createSlice({
 			.addCase(fetchRounds.fulfilled, (state, action) => {
 				state.loading = false;
 				state.error = null;
+				
+				state.preGeneratedRounds = action.payload;
+				state.roundResults = state.preGeneratedRounds.map((round) => ({
+					gameA: round.gameA,
+					gameB: round.gameB,
+					selectedGame: null,
+					correctGame: round.correctGame,
+					isCorrect: false,
+					played: false,
+					resultVisible: false
+				}));
 			})
 			.addCase(fetchRounds.rejected, (state, action) => {
 				state.loading = false;
@@ -185,6 +241,7 @@ export const {
 	submitRoundAnswer,
 	showRoundResult,
 	proceedToNextRound,
+	restoreProgress,
 	setLoading,
 	clearError
 } = gameStatusSlice.actions;

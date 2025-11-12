@@ -17,6 +17,13 @@ interface Save {
     highestStreak: number;
 }
 
+interface InProgressGame {
+    score: number;
+    currentRound: number;
+    roundResults: RoundResult[];
+    timestamp: number;
+}
+
 export function saveDailyResult(day: string, correct: number, roundResults: boolean[]): void {
     const saveStr = localStorage.getItem('dailySave');
 
@@ -70,4 +77,41 @@ export function getStreakInfo(): { currentStreak: number; highestStreak: number 
     }
     
     return { currentStreak: 0, highestStreak: 0 };
+}
+
+export function saveCurrentProgress(day: string, score: number, currentRound: number, roundResults: RoundResult[]): void {
+    const key = `progress_${day}`;
+    const progress: InProgressGame = {
+        score,
+        currentRound,
+        roundResults,
+        timestamp: Date.now()
+    };
+    localStorage.setItem(key, JSON.stringify(progress));
+}
+
+export function loadCurrentProgress(day: string): InProgressGame | null {
+    const key = `progress_${day}`;
+    const saved = localStorage.getItem(key);
+    if (saved) {
+        return JSON.parse(saved);
+    }
+    return null;
+}
+
+export function clearCurrentProgress(day: string): void {
+    const key = `progress_${day}`;
+    localStorage.removeItem(key);
+}
+
+export function clearOldProgress(currentDay: string): void {
+    // Get all localStorage keys
+    const keys = Object.keys(localStorage);
+    
+    // Find and remove any progress keys that don't match today
+    keys.forEach(key => {
+        if (key.startsWith('progress_') && key !== `progress_${currentDay}`) {
+            localStorage.removeItem(key);
+        }
+    });
 }

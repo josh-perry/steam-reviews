@@ -1,6 +1,8 @@
 import { LitElement, html, css } from 'lit';
 import { ReduxMixin } from '../store/ReduxMixin';
 import { fetchDailyDate } from '../store/slices/dateSlice';
+import { restoreProgress, fetchRounds } from '../store/slices/gameStatusSlice';
+import { loadCurrentProgress } from '../services/localSave';
 
 class App extends ReduxMixin(LitElement) {
 	static styles = css`
@@ -86,9 +88,28 @@ class App extends ReduxMixin(LitElement) {
 		}
 	`;
 
-	connectedCallback() {
+	async connectedCallback() {
 		super.connectedCallback();
-		this.dispatch(fetchDailyDate());
+		await this.dispatch(fetchDailyDate());
+		
+		const state = this.getState();
+		const dailyDate = state.date.dailyDate;
+		
+		if (dailyDate) {
+			const savedProgress = loadCurrentProgress(dailyDate);
+			
+			if (savedProgress) {
+				const result = await this.dispatch(fetchRounds());
+				
+				if (fetchRounds.fulfilled.match(result)) {
+					this.dispatch(restoreProgress({
+						score: savedProgress.score,
+						currentRound: savedProgress.currentRound,
+						roundResults: savedProgress.roundResults
+					}));
+				}
+			}
+		}
 	}
 
 	render() {
