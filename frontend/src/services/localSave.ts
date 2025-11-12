@@ -57,3 +57,17 @@ export function getTodaysResult(day: string): DailyResult | null {
 
     return null;
 }
+
+export function getStreakInfo(): { currentStreak: number; highestStreak: number } {
+    const saveStr = localStorage.getItem('dailySave');
+
+    if (saveStr) {
+        const save: Save = JSON.parse(saveStr);
+        return {
+            currentStreak: save.currentStreak.length,
+            highestStreak: save.highestStreak
+        };
+    }
+    
+    return { currentStreak: 0, highestStreak: 0 };
+}

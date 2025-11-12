@@ -1,6 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import { ReduxMixin } from '../store/ReduxMixin';
-import { getTodaysResult } from '../services/localSave';
+import { getStreakInfo, getTodaysResult } from '../services/localSave';
 
 class GameResultsModal extends ReduxMixin(LitElement) {
 	static styles = css`
@@ -101,6 +101,34 @@ class GameResultsModal extends ReduxMixin(LitElement) {
 
 		.share-button.copied {
 			background: #17a2b8;
+		}
+
+		.streak-info {
+			display: flex;
+			justify-content: center;
+			gap: 3rem;
+			margin: 1.5rem 0;
+			flex-wrap: wrap;
+		}
+
+		.streak-item {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			gap: 0.25rem;
+		}
+
+		.streak-label {
+			font-size: 0.9rem;
+			color: #666;
+			text-transform: uppercase;
+			letter-spacing: 0.05em;
+		}
+
+		.streak-value {
+			font-size: 2rem;
+			font-weight: bold;
+			color: #007acc;
 		}
 
 		@media (max-width: 768px) {
@@ -232,6 +260,7 @@ class GameResultsModal extends ReduxMixin(LitElement) {
 
 		const todayResult = dailyDate ? getTodaysResult(dailyDate) : null;
 		const shouldShow = gameComplete || todayResult !== null;
+		const { currentStreak, highestStreak } = getStreakInfo();
 		
 		if (shouldShow) {
 			this.classList.add('visible');
@@ -260,6 +289,17 @@ class GameResultsModal extends ReduxMixin(LitElement) {
 				<div>
 					${this.getMessageForScore(displayScore)}
 					${this.getEmojiForScore(displayScore)}
+				</div>
+
+				<div class="streak-info">
+						<div class="streak-item">
+							<div class="streak-label">Current streak</div>
+							<div class="streak-value">${currentStreak}</div>
+						</div>
+						<div class="streak-item">
+							<div class="streak-label">Highest streak</div>
+							<div class="streak-value">${highestStreak}</div>
+						</div>
 				</div>
 				
 				<div class="modal-buttons">
