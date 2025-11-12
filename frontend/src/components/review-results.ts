@@ -8,6 +8,7 @@ class ReviewResults extends ReduxMixin(LitElement) {
 	private gameBPercentage = 0;
 	private animationDuration = 750;
 	private animationComplete = false;
+	private waitBeforeNextRoundDuration = 1500;
 
 	static styles = css`
 		:host {
@@ -192,7 +193,7 @@ class ReviewResults extends ReduxMixin(LitElement) {
 
 		setTimeout(() => {
 			this.dispatch(proceedToNextRound());
-		}, 3000);
+		}, this.waitBeforeNextRoundDuration);
 	}
 
 	private async preloadNextRoundImages() {
