@@ -168,14 +168,14 @@ class GameResultsModal extends ReduxMixin(LitElement) {
 
 	private async handleShare() {
 		const { roundResults, score, totalRounds } = this.getState().gameStatus;
+        const { dailyDate } = this.getState().date;
 		
 		const emojiResults = roundResults.map(r => {
 			if (!r.played) return '⬛';
 			return r.isCorrect ? '🟩' : '🟥';
 		}).join('');
 
-		const today = new Date().toISOString().split('T')[0];
-		const shareText = `${emojiResults} ${score}/${totalRounds} | ${today} | http://steam.literallyjosh.com`;
+		const shareText = `${this.getEmojiForScore(score)} ${emojiResults} ${score}/${totalRounds} | ${dailyDate} | http://steam.literallyjosh.com`;
 
 		try {
 			await navigator.clipboard.writeText(shareText);
@@ -191,8 +191,41 @@ class GameResultsModal extends ReduxMixin(LitElement) {
 		this.requestUpdate();
 	}
 
+	private getMessageForScore(score: number): string {
+		if (score === 0) {
+			return "Just as impressive as getting them all right, in a way!";
+		} else if (score <= 4) {
+			return "Not so good."
+		} else if (score === 5) {
+			return "Might as well have flipped a coin.";
+		} else if (score <= 7) {
+			return "Not bad!";
+		} else if (score <= 9) {
+			return "Great job!";
+		} else {
+			return "Perfect!";
+		}
+	}
+	
+	private getEmojiForScore(score: number): string {
+		if (score < 2) {
+			return "💩";
+		} else if (score <= 4) {
+			return "😐";
+		} else if (score === 5) {
+			return "🪙";
+		} else if (score <= 7) {
+			return "👍";
+		} else if (score <= 9) {
+			return "🔥";
+		} else {
+			return "🏆";
+		}
+	}
+
 	render() {
 		const { gameComplete, score, totalRounds, roundResults } = this.getState().gameStatus;
+        const { dailyDate } = this.getState().date;
 
 		if (gameComplete) {
 			this.classList.add('visible');
@@ -206,12 +239,17 @@ class GameResultsModal extends ReduxMixin(LitElement) {
 
 		return html`
 			<div class="modal" @click=${(e: Event) => e.stopPropagation()}>
-				<h2>you did it</h2>
+				<h2>${dailyDate}</h2>
 				<div class="score-display">${score}/${totalRounds}</div>
 				
 				<results-summary 
 					.roundResults=${roundResults}>
 				</results-summary>
+
+				<div>
+					${this.getMessageForScore(score)}
+					${this.getEmojiForScore(score)}
+				</div>
 				
 				<div class="modal-buttons">
 					<button class="button share-button ${this.shareButtonText === 'Copied!' ? 'copied' : ''}" @click=${this.handleShare}>
