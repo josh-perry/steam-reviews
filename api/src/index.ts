@@ -171,8 +171,8 @@ const connectToDatabase = (): Promise<void> => {
 const isFileFromToday = (filePath: string): boolean => {
     try {
         const stats = fs.statSync(filePath);
-        const fileDate = new Date(stats.mtime).toDateString();
-        const today = new Date().toDateString();
+        const fileDate = new Date(stats.mtime).toISOString().split('T')[0];
+        const today = new Date().toISOString().split('T')[0];
         return fileDate === today;
     } catch (error) {
         return false;
@@ -188,7 +188,7 @@ const createSeededRandom = (seed: number) => {
 };
 
 const getDailySeed = (): number => {
-    const today = new Date().toDateString();
+    const today = new Date().toISOString().split('T')[0];
     return today.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
 };
 
