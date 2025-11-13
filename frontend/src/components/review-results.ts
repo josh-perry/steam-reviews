@@ -7,8 +7,8 @@ class ReviewResults extends ReduxMixin(LitElement) {
 	private gameAPercentage = 0;
 	private gameBPercentage = 0;
 	private animationDuration = 750;
+	private waitBeforeNextRoundDuration = 1500 + this.animationDuration;
 	private animationComplete = false;
-	private waitBeforeNextRoundDuration = 1500;
 
 	static styles = css`
 		:host {
