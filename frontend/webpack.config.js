@@ -1,9 +1,11 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 
+const isProduction = process.env.NODE_ENV === 'production';
+
 module.exports = {
 	entry: './src/index.ts',
-	mode: 'development',
+	mode: isProduction ? 'production' : 'development',
 	module: {
 		rules: [
 			{
@@ -17,7 +19,7 @@ module.exports = {
 		extensions: ['.tsx', '.ts', '.js'],
 	},
 	output: {
-		filename: 'bundle.js',
+		filename: isProduction ? 'bundle.[contenthash].js' : 'bundle.js',
 		path: path.resolve(__dirname, 'dist'),
 		clean: true,
 		charset: true
