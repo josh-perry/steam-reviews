@@ -83,7 +83,7 @@ export function saveCurrentProgress(day: string, score: number, currentRound: nu
     const key = `progress_${day}`;
     const progress: InProgressGame = {
         score,
-        currentRound,
+        currentRound: currentRound + 1,
         roundResults,
         timestamp: Date.now()
     };

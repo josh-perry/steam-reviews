@@ -169,7 +169,14 @@ const gameStatusSlice = createSlice({
 						roundResult.resultVisible = true;
 					}
 				}
-			});
+				});
+			
+			// Needed if user refreshes while on last round
+			const allRoundsPlayed = state.roundResults.every(round => round.played);
+			if (allRoundsPlayed) {
+				state.gameComplete = true;
+				state.gameInProgress = false;
+			}
 		},
 		
 		setLoading: (state, action: PayloadAction<boolean>) => {
