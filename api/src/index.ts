@@ -6,6 +6,7 @@ import path from 'path';
 import fs from 'fs';
 import https from 'https';
 import { spawn } from 'child_process';
+import seedrandom from 'seedrandom';
 
 dotenv.config();
 
@@ -179,22 +180,13 @@ const isFileFromToday = (filePath: string): boolean => {
     }
 };
 
-const createSeededRandom = (seed: number) => {
-    let current = seed;
-    return () => {
-        current = ((current * 9301 + 49297) % 233280) / 233280;
-        return current;
-    };
+const getDailySeed = (): string => {
+    return new Date().toISOString().split('T')[0];
 };
 
-const getDailySeed = (): number => {
-    const today = new Date().toISOString().split('T')[0];
-    return today.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-};
-
-const shuffleArray = <T>(array: T[], seed: number): T[] => {
+const shuffleArray = <T>(array: T[], seed: string): T[] => {
     const shuffled = [...array];
-    const random = createSeededRandom(seed);
+    const random = seedrandom(seed);
     
     for (let i = shuffled.length - 1; i > 0; i--) {
         const j = Math.floor(random() * (i + 1));
