@@ -40,6 +40,7 @@ interface GameStatusState {
 	loading: boolean;
 	currentRoundAnswered: boolean;
 	showingResults: boolean;
+	showResultColors: boolean;
 	error: string | null;
 }
 
@@ -54,6 +55,7 @@ const initialState: GameStatusState = {
 	loading: false,
 	currentRoundAnswered: false,
 	showingResults: false,
+	showResultColors: false,
 	error: null,
 };
 
@@ -138,8 +140,13 @@ const gameStatusSlice = createSlice({
 			}
 		},
 
+		showRoundResultColors: (state) => {
+			state.showResultColors = true;
+		},
+
 		proceedToNextRound: (state) => {
 			state.showingResults = false;
+			state.showResultColors = false;
 			
 			if (state.currentRound >= state.totalRounds) {
 				state.gameComplete = true;
@@ -260,6 +267,7 @@ const gameStatusSlice = createSlice({
 export const { 
 	submitRoundAnswer,
 	showRoundResult,
+	showRoundResultColors,
 	proceedToNextRound,
 	restoreProgress,
 	setLoading,

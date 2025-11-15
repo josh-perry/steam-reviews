@@ -232,12 +232,11 @@ class GameComponent extends ReduxMixin(LitElement) {
 	}
 
 	private updateHostClasses() {
-		const { currentRoundAnswered } = this.getState().gameStatus;
+		const { currentRoundAnswered, showResultColors } = this.getState().gameStatus;
 		
-		// Remove all state classes
 		this.classList.remove('disabled', 'correct', 'incorrect', 'not-selected', 'selected');
 
-		if (currentRoundAnswered && this.showResult) {
+		if (currentRoundAnswered && showResultColors) {
 			if (this.isSelected) {
 				this.classList.add(this.isCorrect ? 'correct' : 'incorrect');
 			} else {

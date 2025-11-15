@@ -1,6 +1,6 @@
 import { Middleware } from '@reduxjs/toolkit';
 import { saveDailyResult, saveCurrentProgress, clearCurrentProgress, clearOldProgress } from '../../services/localSave';
-import { showRoundResult, proceedToNextRound } from '../slices/gameStatusSlice';
+import { showRoundResult, showRoundResultColors, proceedToNextRound } from '../slices/gameStatusSlice';
 import type { RoundResult } from '../slices/gameStatusSlice';
 
 const ANIMATION_DURATION = 750;
@@ -14,6 +14,10 @@ export const gameCompleteMiddleware: Middleware = (store) => (next) => (action: 
 
 	if (action.type === 'gameStatus/submitRoundAnswer') {
 		store.dispatch(showRoundResult());
+
+		setTimeout(() => {
+			store.dispatch(showRoundResultColors());
+		}, ANIMATION_DURATION);
 
 		setTimeout(() => {
 			store.dispatch(proceedToNextRound());
