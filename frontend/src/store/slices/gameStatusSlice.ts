@@ -99,6 +99,17 @@ const gameStatusSlice = createSlice({
 		submitRoundAnswer: (state, action: PayloadAction<{ selectedGame: Game }>) => {
 			const { selectedGame } = action.payload;
 			const currentRoundIndex = state.currentRound - 1;
+			const nextRoundIndex = state.currentRound;
+
+			if (nextRoundIndex < state.preGeneratedRounds.length) {
+				const nextRound = state.preGeneratedRounds[nextRoundIndex];
+				const imagePreloader = ImagePreloader.getInstance();
+				
+				imagePreloader.preloadNextRoundImages([
+					nextRound.gameA.appId,
+					nextRound.gameB.appId
+				]);
+			}
 			
 			state.currentRoundAnswered = true;
 			state.showingResults = true;
@@ -124,17 +135,6 @@ const gameStatusSlice = createSlice({
 			if (currentRoundIndex >= 0 && currentRoundIndex < state.roundResults.length) {
 				const roundResult = state.roundResults[currentRoundIndex];
 				roundResult.resultVisible = true;
-			}
-
-			const nextRoundIndex = state.currentRound;
-			if (nextRoundIndex < state.preGeneratedRounds.length) {
-				const nextRound = state.preGeneratedRounds[nextRoundIndex];
-				const imagePreloader = ImagePreloader.getInstance();
-				
-				imagePreloader.preloadNextRoundImages([
-					nextRound.gameA.appId,
-					nextRound.gameB.appId
-				]);
 			}
 		},
 
