@@ -68,7 +68,8 @@ class App extends ReduxMixin(LitElement) {
 			}
 
 			main {
-				padding: 0.5rem;
+				justify-content: flex-start;
+				padding: 0.75rem 0.5rem;
 			}
 			
 			footer {
@@ -83,7 +84,7 @@ class App extends ReduxMixin(LitElement) {
 			}
 
 			main {
-				padding: 0.25rem;
+				padding: 0.5rem 0.25rem;
 			}
 		}
 	`;

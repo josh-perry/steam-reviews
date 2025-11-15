@@ -8,26 +8,23 @@ class GamesContainer extends ReduxMixin(LitElement) {
 			display: flex;
 			gap: 2rem;
 			width: 100%;
-			max-width: 1200px;
 			justify-content: center;
 			align-items: stretch;
-			padding: 0 1rem;
 			box-sizing: border-box;
 		}
 
 		@media (max-width: 768px) {
 			:host {
 				flex-direction: column;
-				gap: 1.5rem;
+				gap: 1rem;
 				max-width: 500px;
-				padding: 0 1rem;
+				flex: 1;
 			}
 		}
 
 		@media (max-width: 480px) {
 			:host {
-				gap: 1rem;
-				padding: 0 0.75rem;
+				gap: 0.75rem;
 			}
 		}
 	`;
@@ -40,13 +37,27 @@ class GamesContainer extends ReduxMixin(LitElement) {
 			return html``;
 		}
 
-		if (showingResults) {
-			return html`<review-results></review-results>`;
-		}
+		const state = this.getState().gameStatus;
+		const currentRoundResult = state.roundResults[state.currentRound - 1];
+		const selectedGameId = currentRoundResult?.selectedGame?.appId;
+
+		const gameASelected = selectedGameId === currentRound.gameA.appId;
+		const gameBSelected = selectedGameId === currentRound.gameB.appId;
+		const correctGameId = currentRound.correctGame.appId;
 
 		return html`
-			<steam-game .game=${currentRound.gameA}></steam-game>
-			<steam-game .game=${currentRound.gameB}></steam-game>
+			<steam-game 
+				.game=${currentRound.gameA}
+				.isSelected=${gameASelected}
+				.isCorrect=${correctGameId === currentRound.gameA.appId}
+				.showResult=${showingResults && currentRoundResult?.resultVisible}>
+			</steam-game>
+			<steam-game 
+				.game=${currentRound.gameB}
+				.isSelected=${gameBSelected}
+				.isCorrect=${correctGameId === currentRound.gameB.appId}
+				.showResult=${showingResults && currentRoundResult?.resultVisible}>
+			</steam-game>
 		`;
 	}
 }

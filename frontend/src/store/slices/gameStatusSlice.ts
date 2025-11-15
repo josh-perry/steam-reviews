@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { apiService, GameRound as ApiGameRound } from '../../services/api';
 import { clearOldProgress } from '../../services/localSave';
+import { ImagePreloader } from '../../services/imagePreloader';
 import type { RootState } from '../store';
 
 export interface Game {
@@ -123,6 +124,17 @@ const gameStatusSlice = createSlice({
 			if (currentRoundIndex >= 0 && currentRoundIndex < state.roundResults.length) {
 				const roundResult = state.roundResults[currentRoundIndex];
 				roundResult.resultVisible = true;
+			}
+
+			const nextRoundIndex = state.currentRound;
+			if (nextRoundIndex < state.preGeneratedRounds.length) {
+				const nextRound = state.preGeneratedRounds[nextRoundIndex];
+				const imagePreloader = ImagePreloader.getInstance();
+				
+				imagePreloader.preloadNextRoundImages([
+					nextRound.gameA.appId,
+					nextRound.gameB.appId
+				]);
 			}
 		},
 
