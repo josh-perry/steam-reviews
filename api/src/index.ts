@@ -25,6 +25,7 @@ interface Game {
     name: string;
     rating: number;
     reviewCount: number;
+    imgUrl?: string;
 }
 
 interface GameRound {
@@ -229,16 +230,17 @@ const generateGameRounds = (games: Game[], totalRounds: number = 10): GameRound[
     return rounds;
 };
 
-const transformDatabaseRow = (row: any): Game => ({
+const transformDatabaseRow = async (row: any): Promise<Game> => ({
     appId: row.id,
     name: row.name,
     rating: row.positive_reviews && row.negative_reviews
         ? parseFloat(((row.positive_reviews / (row.positive_reviews + row.negative_reviews)) * 100).toFixed(2))
         : 0,
-    reviewCount: row.total_reviews || 0
+    reviewCount: row.total_reviews || 0,
+    imgUrl: await getHeroImageUrl(row.id).catch(() => undefined),
 });
 
-const fetchGamesFromDatabase = (): Promise<Game[]> => {
+const fetchGamesFromDatabase = async (): Promise<Game[]> => {
     return new Promise((resolve, reject) => {
         const seed = getDailySeed();
         const query = `
@@ -248,14 +250,14 @@ const fetchGamesFromDatabase = (): Promise<Game[]> => {
             LIMIT 20
         `;
         
-        db.all(query, [], (err, rows) => {
+        db.all(query, [], async (err, rows) => {
             if (err) {
                 console.error('Database query error:', err.message);
                 reject(err);
                 return;
             }
             
-            const games = rows.map(transformDatabaseRow);
+            const games = await Promise.all(rows.map(transformDatabaseRow));
             resolve(games);
         });
     });
@@ -309,6 +311,30 @@ const getRounds = async (): Promise<GameRound[]> => {
     
     return await generateAndSaveRounds();
 };
+
+const getHeroImageUrl = (appId: number): Promise<string> => {
+    const url = `https://store.steampowered.com/points/heroimage?appid=${appId};`
+
+    return new Promise((resolve, reject) => {
+        https.get(url, (res) => {
+            if (res.statusCode === 200) {
+                let data = '';
+                res.on('data', (chunk) => {
+                    data += chunk;
+                });
+
+                res.on('end', () => {
+                    const responseData = JSON.parse(data);
+                    console.log(`Hero image URL for appId ${appId}: ${responseData.img_url}`);
+                    resolve(responseData.img_url);
+                });
+            } else {
+                console.error(`Failed to get hero image for appId ${appId}, status code: ${res.statusCode}`);
+                reject(new Error(`Failed to get hero image, status code: ${res.statusCode}`));
+            }
+        });
+    });
+}
 
 app.get('/api/health', (req, res) => {
     res.json({ status: 'OK', message: 'Steam Reviews API is running' });

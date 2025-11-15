@@ -9,6 +9,7 @@ export interface Game {
 	appId: number;
 	rating: number;
 	reviewCount: number;
+	imgUrl: string;
 }
 
 export interface RoundResult {

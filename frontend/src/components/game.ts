@@ -166,13 +166,11 @@ class GameComponent extends ReduxMixin(LitElement) {
 			this.classList.remove('disabled');
 		}
 
-		const imageUrl = `https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/${this.game.appId}/header.jpg`;
-
 		return html`
 			<div class="game-info" @click=${this.handleClick}>
 				<div class="game-image">
 					<img 
-						src="${imageUrl}" 
+						src="${this.game.imgUrl}" 
 						alt="${this.game.name}"
 						@error=${this.handleImageError}
 					/>
