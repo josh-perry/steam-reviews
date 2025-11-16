@@ -15,6 +15,7 @@ const PORT = parseInt(process.env.PORT || '5000', 10);
 const dbPath = path.join(__dirname, '..', 'data', 'games.sqlite');
 const roundsFilePath = path.join(__dirname, '..', 'data', 'daily-rounds.json');
 const gameNamesFilePath = path.join(__dirname, '..', 'data', 'game-names.json');
+const tagGameFilePath = path.join(__dirname, '..', 'data', 'daily-tag-game.json');
 
 app.set('trust proxy', 1);
 
@@ -28,6 +29,8 @@ interface Game {
     reviewCount: number;
     imgUrl?: string;
     tags?: string[];
+    developers?: string[];
+    publishers?: string[];
 }
 
 interface GameRound {
@@ -45,7 +48,7 @@ const STEAM_DATABASE_URL = 'https://github.com/250/Steam-250/releases/download/s
 const downloadFile = (url: string, destination: string): Promise<void> => {
     return new Promise((resolve, reject) => {
         const file = fs.createWriteStream(destination);
-        
+
         https.get(url, (response) => {
             if (response.statusCode === 302 || response.statusCode === 301) {
                 if (response.headers.location) {
@@ -55,21 +58,21 @@ const downloadFile = (url: string, destination: string): Promise<void> => {
                     return;
                 }
             }
-            
+
             if (response.statusCode !== 200) {
                 reject(new Error(`HTTP ${response.statusCode}: ${response.statusMessage}`));
                 return;
             }
-            
+
             response.pipe(file);
-            
+
             file.on('finish', () => {
                 file.close();
                 resolve();
             });
-            
+
             file.on('error', (err) => {
-                fs.unlink(destination, () => {});
+                fs.unlink(destination, () => { });
                 reject(err);
             });
         }).on('error', (err) => {
@@ -81,7 +84,7 @@ const downloadFile = (url: string, destination: string): Promise<void> => {
 const extractTarXz = (archivePath: string, extractDir: string): Promise<void> => {
     return new Promise((resolve, reject) => {
         const tar = spawn('tar', ['-xf', archivePath, '-C', extractDir]);
-        
+
         tar.on('close', (code) => {
             if (code === 0) {
                 resolve();
@@ -89,7 +92,7 @@ const extractTarXz = (archivePath: string, extractDir: string): Promise<void> =>
                 reject(new Error(`tar extraction failed with code ${code}`));
             }
         });
-        
+
         tar.on('error', (err) => {
             reject(err);
         });
@@ -98,50 +101,50 @@ const extractTarXz = (archivePath: string, extractDir: string): Promise<void> =>
 
 const downloadAndExtractDatabase = async (): Promise<void> => {
     console.log('Downloading Steam database...');
-    
+
     const dataDir = path.dirname(dbPath);
     if (!fs.existsSync(dataDir)) {
         fs.mkdirSync(dataDir, { recursive: true });
     }
-    
+
     const tempArchivePath = path.join(dataDir, 'snapshots.tar.xz');
     const tempExtractDir = path.join(dataDir, 'temp_extract');
-    
+
     try {
         await downloadFile(STEAM_DATABASE_URL, tempArchivePath);
         console.log('Download complete. Extracting archive...');
-        
+
         if (!fs.existsSync(tempExtractDir)) {
             fs.mkdirSync(tempExtractDir, { recursive: true });
         }
-        
+
         await extractTarXz(tempArchivePath, tempExtractDir);
-        
+
         const extractedFiles = fs.readdirSync(tempExtractDir);
         const sqliteFile = extractedFiles.find(file => file.endsWith('.sqlite'));
-        
+
         if (!sqliteFile) {
             throw new Error('No SQLite file found in extracted archive');
         }
-        
+
         const sourcePath = path.join(tempExtractDir, sqliteFile);
         fs.copyFileSync(sourcePath, dbPath);
-        
+
         console.log(`Database setup complete: ${sqliteFile} -> games.sqlite`);
-        
+
         fs.rmSync(tempArchivePath);
         fs.rmSync(tempExtractDir, { recursive: true });
-        
+
     } catch (error) {
         console.error('Error downloading/extracting database:', error);
-        
+
         if (fs.existsSync(tempArchivePath)) {
             fs.rmSync(tempArchivePath);
         }
         if (fs.existsSync(tempExtractDir)) {
             fs.rmSync(tempExtractDir, { recursive: true });
         }
-        
+
         throw error;
     }
 };
@@ -151,7 +154,7 @@ const initializeDatabase = async (): Promise<void> => {
         console.log('Database file exists, skipping download');
         return;
     }
-    
+
     console.log('Database file not found, initializing...');
     await downloadAndExtractDatabase();
 };
@@ -190,12 +193,12 @@ const getDailySeed = (): string => {
 const shuffleArray = <T>(array: T[], seed: string): T[] => {
     const shuffled = [...array];
     const random = seedrandom(seed);
-    
+
     for (let i = shuffled.length - 1; i > 0; i--) {
         const j = Math.floor(random() * (i + 1));
         [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
-    
+
     return shuffled;
 };
 
@@ -206,29 +209,29 @@ const createGameRound = (gameA: Game, gameB: Game): GameRound => {
 
 const generateGameRounds = (games: Game[], totalRounds: number = 10): GameRound[] => {
     if (games.length < 2) return [];
-    
+
     const seed = getDailySeed();
     let shuffledGames = shuffleArray(games, seed);
     const rounds: GameRound[] = [];
     let gameIndex = 0;
-    
+
     for (let i = 0; i < totalRounds; i++) {
         if (gameIndex + 1 >= shuffledGames.length) {
             const usedGames = shuffledGames.slice(0, gameIndex);
-            const remainingGames = games.filter(g => 
+            const remainingGames = games.filter(g =>
                 !usedGames.some(used => used.appId === g.appId)
             );
             const reshuffled = shuffleArray(remainingGames, seed + i);
             shuffledGames.splice(gameIndex, 0, ...reshuffled);
         }
-        
+
         const gameA = shuffledGames[gameIndex];
         const gameB = shuffledGames[gameIndex + 1];
         gameIndex += 2;
-        
+
         rounds.push(createGameRound(gameA, gameB));
     }
-    
+
     return rounds;
 };
 
@@ -241,25 +244,30 @@ const transformDatabaseRow = async (row: any): Promise<Game> => ({
     reviewCount: row.total_reviews || 0,
     imgUrl: await getHeroImageUrl(row.id).catch(() => undefined),
     tags: await getGameTags(row.id).catch(() => []),
+    developers: await getGameDevelopers(row.id).catch(() => []),
+    publishers: await getGamePublishers(row.id).catch(() => []),
 });
 
 const fetchGamesFromDatabase = async (): Promise<Game[]> => {
     return new Promise((resolve, reject) => {
-        const seed = getDailySeed();
+        const seed = getDailySeed() + '-reviews';
+        const rng = seedrandom(seed);
+        const seedValue = Math.floor(rng() * 982451653);
+        
         const query = `
             SELECT * FROM app 
             WHERE adult = 0 AND total_reviews > 5000 
-            ORDER BY (((id * ${seed}) % 982451653) + ((total_reviews * ${seed}) % 982451653)) % 982451653
+            ORDER BY (((id * ${seedValue}) % 982451653) + ((total_reviews * ${seedValue}) % 982451653)) % 982451653
             LIMIT 20
         `;
-        
+
         db.all(query, [], async (err, rows) => {
             if (err) {
                 console.error('Database query error:', err.message);
                 reject(err);
                 return;
             }
-            
+
             const games = await Promise.all(rows.map(transformDatabaseRow));
             resolve(games);
         });
@@ -270,12 +278,12 @@ const saveRoundsToFile = (rounds: GameRound[]): void => {
     const roundsData: RoundsData = {
         rounds
     };
-    
+
     const dataDir = path.dirname(roundsFilePath);
     if (!fs.existsSync(dataDir)) {
         fs.mkdirSync(dataDir, { recursive: true });
     }
-    
+
     fs.writeFileSync(roundsFilePath, JSON.stringify(roundsData, null, 2));
     console.log('Game rounds generated and saved for today');
 };
@@ -300,7 +308,7 @@ const generateAndSaveRounds = async (): Promise<GameRound[]> => {
 const getRounds = async (): Promise<GameRound[]> => {
     const fileExists = fs.existsSync(roundsFilePath);
     const isFromToday = fileExists && isFileFromToday(roundsFilePath);
-    
+
     if (isFromToday) {
         console.log('Loading rounds from cached file');
         const cachedRounds = loadRoundsFromFile();
@@ -311,7 +319,7 @@ const getRounds = async (): Promise<GameRound[]> => {
     } else {
         console.log('Generating new rounds for today');
     }
-    
+
     return await generateAndSaveRounds();
 };
 
@@ -350,16 +358,58 @@ const getGameTags = (appId: number): Promise<string[]> => {
             ORDER BY at.votes DESC
             LIMIT 10
         `;
-        
+
         db.all(query, [appId], (err, rows: any[]) => {
             if (err) {
                 console.error(`Error fetching tags for appId ${appId}:`, err.message);
                 reject(err);
                 return;
             }
-            
+
             const tags = rows.map(row => row.name);
             resolve(tags);
+        });
+    });
+};
+
+const getGameDevelopers = (appId: number): Promise<string[]> => {
+    return new Promise((resolve, reject) => {
+        const query = `
+            SELECT name 
+            FROM app_developer 
+            WHERE app_id = ?
+        `;
+
+        db.all(query, [appId], (err, rows: any[]) => {
+            if (err) {
+                console.error(`Error fetching developers for appId ${appId}:`, err.message);
+                reject(err);
+                return;
+            }
+
+            const developers = rows.map(row => row.name);
+            resolve(developers);
+        });
+    });
+};
+
+const getGamePublishers = (appId: number): Promise<string[]> => {
+    return new Promise((resolve, reject) => {
+        const query = `
+            SELECT name 
+            FROM app_publisher 
+            WHERE app_id = ?
+        `;
+
+        db.all(query, [appId], (err, rows: any[]) => {
+            if (err) {
+                console.error(`Error fetching publishers for appId ${appId}:`, err.message);
+                reject(err);
+                return;
+            }
+
+            const publishers = rows.map(row => row.name);
+            resolve(publishers);
         });
     });
 };
@@ -372,14 +422,14 @@ const fetchAllGameNames = (): Promise<string[]> => {
             WHERE adult = 0 AND total_reviews > 5000 
             ORDER BY name ASC
         `;
-        
+
         db.all(query, [], (err, rows: any[]) => {
             if (err) {
                 console.error('Error fetching game names:', err.message);
                 reject(err);
                 return;
             }
-            
+
             const names = rows.map(row => row.name);
             console.log(`Fetched ${names.length} game names for autocomplete`);
             resolve(names);
@@ -389,16 +439,16 @@ const fetchAllGameNames = (): Promise<string[]> => {
 
 const generateGameNamesFile = async (): Promise<void> => {
     console.log('Generating game names file for autocomplete...');
-    
+
     const names = await fetchAllGameNames();
-    
+
     const dataDir = path.dirname(gameNamesFilePath);
     if (!fs.existsSync(dataDir)) {
         fs.mkdirSync(dataDir, { recursive: true });
     }
-    
+
     fs.writeFileSync(gameNamesFilePath, JSON.stringify(names, null, 2));
-    
+
     const stats = fs.statSync(gameNamesFilePath);
     const fileSizeKB = (stats.size / 1024).toFixed(2);
     console.log(`Game names file created: ${fileSizeKB} KB (${names.length} games)`);
@@ -411,9 +461,84 @@ const initializeGameNames = async (): Promise<void> => {
         console.log(`Game names file exists (${fileSizeKB} KB), skipping generation`);
         return;
     }
-    
+
     console.log('Game names file not found, generating...');
     await generateGameNamesFile();
+};
+
+const fetchTagGameFromDatabase = async (): Promise<Game> => {
+    return new Promise((resolve, reject) => {
+        const seed = getDailySeed() + '-tags';
+        const rng = seedrandom(seed);
+        const seedValue = Math.floor(rng() * 982451653);
+        
+        const query = `
+            SELECT * FROM app 
+            WHERE adult = 0 AND total_reviews > 5000 
+            ORDER BY (((id * ${seedValue}) % 982451653) + ((total_reviews * ${seedValue}) % 982451653)) % 982451653
+            LIMIT 1
+        `;
+
+        db.all(query, [], async (err, rows) => {
+            if (err) {
+                console.error('Database query error:', err.message);
+                reject(err);
+                return;
+            }
+
+            if (rows.length === 0) {
+                reject(new Error('No game found for tag game'));
+                return;
+            }
+
+            const game = await transformDatabaseRow(rows[0]);
+            resolve(game);
+        });
+    });
+};
+
+const saveTagGameToFile = (game: Game): void => {
+    const dataDir = path.dirname(tagGameFilePath);
+    if (!fs.existsSync(dataDir)) {
+        fs.mkdirSync(dataDir, { recursive: true });
+    }
+
+    fs.writeFileSync(tagGameFilePath, JSON.stringify(game, null, 2));
+    console.log(`Daily tag game generated and saved: ${game.name} with ${game.tags?.length || 0} tags`);
+};
+
+const loadTagGameFromFile = (): Game | null => {
+    try {
+        const fileContent = fs.readFileSync(tagGameFilePath, 'utf8');
+        const game: Game = JSON.parse(fileContent);
+        return game;
+    } catch (error) {
+        return null;
+    }
+};
+
+const generateAndSaveTagGame = async (): Promise<Game> => {
+    const game = await fetchTagGameFromDatabase();
+    saveTagGameToFile(game);
+    return game;
+};
+
+const getTagGame = async (): Promise<Game> => {
+    const fileExists = fs.existsSync(tagGameFilePath);
+    const isFromToday = fileExists && isFileFromToday(tagGameFilePath);
+
+    if (isFromToday) {
+        console.log('Loading tag game from cached file');
+        const cachedTagGame = loadTagGameFromFile();
+        if (cachedTagGame) {
+            return cachedTagGame;
+        }
+        console.log('Failed to load from cache, generating new tag game');
+    } else {
+        console.log('Generating new tag game for today');
+    }
+
+    return await generateAndSaveTagGame();
 };
 
 app.get('/api/health', (req, res) => {
@@ -444,13 +569,23 @@ app.get('/api/game-names', async (req, res) => {
         if (!fs.existsSync(gameNamesFilePath)) {
             await generateGameNamesFile();
         }
-        
+
         const fileContent = fs.readFileSync(gameNamesFilePath, 'utf8');
         const gameNames = JSON.parse(fileContent);
         res.json(gameNames);
     } catch (error) {
         console.error('Error serving game names:', error);
         res.status(500).json({ error: 'Failed to get game names' });
+    }
+});
+
+app.get('/api/tag-game', async (req, res) => {
+    try {
+        const tagGame = await getTagGame();
+        res.json(tagGame);
+    } catch (error) {
+        console.error('Error serving tag game:', error);
+        res.status(500).json({ error: 'Failed to generate tag game' });
     }
 });
 
@@ -474,7 +609,7 @@ const startServer = async (): Promise<void> => {
         await initializeDatabase();
         await connectToDatabase();
         await initializeGameNames();
-        
+
         app.listen(PORT, '0.0.0.0', () => {
             console.log(`Server is running on port ${PORT}`);
         });

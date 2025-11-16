@@ -25,7 +25,7 @@ interface TagsGameState {
 	currentRound: number;
 	totalRounds: number;
 	roundResults: TagsRoundResult[];
-	preGeneratedGames: Game[];
+	dailyGame: Game | null;
 	score: number;
 	currentRoundAnswered: boolean;
 	showingResults: boolean;
@@ -36,9 +36,9 @@ interface TagsGameState {
 
 const initialState: TagsGameState = {
 	currentRound: 0,
-	totalRounds: 10,
+	totalRounds: 1,
 	roundResults: [],
-	preGeneratedGames: [],
+	dailyGame: null,
 	score: 0,
 	currentRoundAnswered: false,
 	showingResults: false,
@@ -47,23 +47,23 @@ const initialState: TagsGameState = {
 	gameComplete: false,
 };
 
-export const fetchTagsGames = createAsyncThunk(
-	'tagsGame/fetchGames',
+export const fetchTagGame = createAsyncThunk(
+	'tagsGame/fetchTagGame',
 	async (_, { rejectWithValue }) => {
-		const response = await apiService.getRounds();
+		const response = await apiService.getTagGame();
 		if (response.error) {
 			return rejectWithValue(response.error);
 		}
 
-		return (response.data || []).map(round => round.correctGame);
+		return response.data!;
 	}
 );
 
 export const startTagsGame = createAsyncThunk(
 	'tagsGame/startGame',
 	async (_, { dispatch, getState }) => {
-		const result = await dispatch(fetchTagsGames());
-		if (fetchTagsGames.rejected.match(result)) {
+		const result = await dispatch(fetchTagGame());
+		if (fetchTagGame.rejected.match(result)) {
 			throw new Error(result.payload as string);
 		}
 		
@@ -74,13 +74,12 @@ export const startTagsGame = createAsyncThunk(
 			clearOldProgress(dailyDate);
 		}
 		
-		return result.payload as Game[];
+		return result.payload as Game;
 	}
 );
 
 export const getCurrentGame = (state: { tagsGame: TagsGameState }): Game | null => {
-	const { currentRound, preGeneratedGames } = state.tagsGame;
-	return preGeneratedGames[currentRound - 1] || null;
+	return state.tagsGame.dailyGame;
 };
 
 const tagsGameSlice = createSlice({
@@ -138,15 +137,15 @@ const tagsGameSlice = createSlice({
 	},
 	extraReducers: (builder) => {
 		builder
-			.addCase(fetchTagsGames.fulfilled, (state, action) => {
-				state.preGeneratedGames = action.payload;
-				state.roundResults = state.preGeneratedGames.map((game) => ({
-					correctGame: game,
+			.addCase(fetchTagGame.fulfilled, (state, action) => {
+				state.dailyGame = action.payload;
+				state.roundResults = [{
+					correctGame: action.payload,
 					userGuess: null,
 					isCorrect: false,
 					played: false,
 					resultVisible: false
-				}));
+				}];
 			})
 			.addCase(startTagsGame.fulfilled, (state, action) => {
 				state.gameInProgress = true;
@@ -156,15 +155,15 @@ const tagsGameSlice = createSlice({
 				state.currentRoundAnswered = false;
 				state.showingResults = false;
 				
-				state.preGeneratedGames = action.payload;
+				state.dailyGame = action.payload;
 				
-				state.roundResults = state.preGeneratedGames.map((game) => ({
-					correctGame: game,
+				state.roundResults = [{
+					correctGame: action.payload,
 					userGuess: null,
 					isCorrect: false,
 					played: false,
 					resultVisible: false
-				}));
+				}];
 			});
 	}
 });

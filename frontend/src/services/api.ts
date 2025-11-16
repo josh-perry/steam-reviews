@@ -59,6 +59,10 @@ class ApiService {
   async getGameNames(): Promise<ApiResponse<string[]>> {
     return this.fetchWithErrorHandling<string[]>(`${API_BASE_URL}/game-names`);
   }
+
+  async getTagGame(): Promise<ApiResponse<Game>> {
+    return this.fetchWithErrorHandling<Game>(`${API_BASE_URL}/tag-game`);
+  }
 }
 
 export const apiService = new ApiService();
