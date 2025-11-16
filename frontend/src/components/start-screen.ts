@@ -1,9 +1,16 @@
 import { LitElement, html, css } from 'lit';
+import { state } from 'lit/decorators.js';
 import { ReduxMixin } from '../store/ReduxMixin';
-import { startGameWithData, clearError } from '../store/slices/gameStatusSlice';
-import { hasPlayedToday } from '../services/localSave';
+import { setGameMode } from '../store/slices/gameModeSlice';
+import { startReviewsGame, fetchRounds, restoreProgress, showCompletedGame } from '../store/slices/reviewsGameSlice';
+import { startTagsGame } from '../store/slices/tagsGameSlice';
+import type { GameMode } from '../store/slices/gameModeSlice';
+import { hasPlayedToday, loadCurrentProgress } from '../services/localSave';
 
 class StartScreen extends ReduxMixin(LitElement) {
+	@state()
+	private buttonText = 'Start Game';
+
 	static styles = css`
 		:host {
 			display: flex;
@@ -29,6 +36,46 @@ class StartScreen extends ReduxMixin(LitElement) {
 			max-width: 600px;
 			line-height: 1.6;
 			margin: 0;
+		}
+
+		.mode-selector {
+			display: flex;
+			gap: 1rem;
+			width: 100%;
+			max-width: 500px;
+		}
+
+		.mode-button {
+			flex: 1;
+			padding: 1.5rem;
+			border: 2px solid #ccc;
+			background: white;
+			border-radius: 12px;
+			cursor: pointer;
+			transition: all 0.3s ease;
+			font-size: 1rem;
+		}
+
+		.mode-button:hover:not(.selected) {
+			border-color: #007acc;
+			background: #f8f9fa;
+		}
+
+		.mode-button.selected {
+			border-color: #007acc;
+			background: #e6f3ff;
+		}
+
+		.mode-button h3 {
+			margin: 0 0 0.5rem 0;
+			font-size: 1.3rem;
+			color: #333;
+		}
+
+		.mode-button p {
+			margin: 0;
+			font-size: 0.9rem;
+			color: #666;
 		}
 
 		.start-button {
@@ -78,22 +125,31 @@ class StartScreen extends ReduxMixin(LitElement) {
 				gap: 1.5rem;
 				padding: 0.75rem;
 			}
-			
+
 			h2 {
 				font-size: 1.75rem;
 			}
-			
+
 			p {
 				font-size: 1.1rem;
 			}
-			
+
+			.mode-selector {
+				flex-direction: column;
+				gap: 0.75rem;
+			}
+
+			.mode-button {
+				padding: 1.25rem;
+			}
+
 			.start-button {
 				padding: 0.875rem 1.75rem;
 				font-size: 1.1rem;
 				width: 100%;
 				max-width: 250px;
 			}
-			
+
 			.error {
 				padding: 0.875rem;
 				font-size: 0.9rem;
@@ -105,15 +161,19 @@ class StartScreen extends ReduxMixin(LitElement) {
 				gap: 1rem;
 				padding: 0.5rem;
 			}
-			
+
 			h2 {
 				font-size: 1.5rem;
 			}
-			
+
 			p {
 				font-size: 1rem;
 			}
-			
+
+			.mode-button {
+				padding: 1rem;
+			}
+
 			.start-button {
 				padding: 0.75rem 1.5rem;
 				font-size: 1rem;
@@ -121,42 +181,113 @@ class StartScreen extends ReduxMixin(LitElement) {
 		}
 	`;
 
-	private handleStartGame() {
-		this.dispatch(clearError());
-		this.dispatch(startGameWithData());
+	private handleModeSelect(mode: GameMode) {
+		this.dispatch(setGameMode(mode));
+		this.updateButtonText();
+	}
+
+	private updateButtonText() {
+		const { currentMode } = this.getState().gameMode;
+		const { dailyDate } = this.getState().date;
+
+		const playedToday = dailyDate && hasPlayedToday(dailyDate);
+		const hasProgress = dailyDate && loadCurrentProgress(dailyDate) !== null;
+
+		this.buttonText = 'Start Game';
+
+		if (currentMode === 'reviews') {
+			if (playedToday) {
+				this.buttonText = 'Show Results';
+			} else if (hasProgress) {
+				this.buttonText = 'Resume Game';
+			}
+		} else if (currentMode === 'tags') {
+			// We don't store progress for tags game yet.
+		}
+	}
+
+	connectedCallback() {
+		super.connectedCallback();
+		this.updateButtonText();
+	}
+
+	private async handleStartGame() {
+		const { currentMode } = this.getState().gameMode;
+		const { dailyDate } = this.getState().date;
+
+		if (currentMode === 'tags') {
+			return;
+		}
+
+		if (dailyDate && hasPlayedToday(dailyDate)) {
+			if (currentMode === 'reviews') {
+				const result = await this.dispatch(fetchRounds());
+
+				if (fetchRounds.fulfilled.match(result)) {
+					this.dispatch(showCompletedGame());
+				}
+			} else {
+				this.dispatch(startTagsGame());
+			}
+			return;
+		}
+
+		if (dailyDate) {
+			const savedProgress = loadCurrentProgress(dailyDate);
+
+			if (savedProgress && currentMode === 'reviews') {
+				const result = await this.dispatch(fetchRounds());
+
+				if (fetchRounds.fulfilled.match(result)) {
+					this.dispatch(restoreProgress({
+						score: savedProgress.score,
+						currentRound: savedProgress.currentRound,
+						roundResults: savedProgress.roundResults
+					}));
+				}
+				return;
+			}
+		}
+
+		if (currentMode === 'reviews') {
+			this.dispatch(startReviewsGame());
+		} else {
+			this.dispatch(startTagsGame());
+		}
 	}
 
 	render() {
-		const { loading, error } = this.getState().gameStatus;
-		const { dailyDate } = this.getState().date;
-		const playedToday = dailyDate && hasPlayedToday(dailyDate);
+		const { currentMode } = this.getState().gameMode;
+
+		this.updateButtonText();
 
 		return html`
 			<h2>which game is rated higher: the game</h2>
-			<p>pick the one with better review %</p>
-			
-			${error ? html`
-				<div class="error">
-					Error: ${error}
-					<br><small>Make sure the API server is running on port 5000</small>
+			<p>Choose a game mode:</p>
+
+			<div class="mode-selector">
+				<div
+					class="mode-button ${currentMode === 'reviews' ? 'selected' : ''}"
+					@click=${() => this.handleModeSelect('reviews')}
+				>
+					<h3>Reviews</h3>
+					<p>Pick which game has the higher review %</p>
 				</div>
-			` : ''}
-			
-			${loading ? html`
-				<div class="loading">Loading games...</div>
-			` : ''}
+				<div
+					class="mode-button ${currentMode === 'tags' ? 'selected' : ''}"
+					@click=${() => this.handleModeSelect('tags')}
+				>
+					<h3>Tags</h3>
+					<p>Guess the game from its Steam tags</p>
+				</div>
+			</div>
 
 			<button
-				class="start-button" 
+				class="start-button"
 				@click=${this.handleStartGame}
-				?disabled=${loading || playedToday}
 			>
-				${loading ? 'Loading...' : 'Start Game'}
+				${this.buttonText}
 			</button>
-
-			${playedToday ? html`
-				<game-results-modal></game-results-modal>
-			` : ''}
 		`;
 	}
 }

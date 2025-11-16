@@ -1,8 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import { ReduxMixin } from '../store/ReduxMixin';
 import { fetchDailyDate } from '../store/slices/dateSlice';
-import { restoreProgress, fetchRounds } from '../store/slices/gameStatusSlice';
-import { loadCurrentProgress } from '../services/localSave';
 
 class App extends ReduxMixin(LitElement) {
 	static styles = css`
@@ -92,29 +90,16 @@ class App extends ReduxMixin(LitElement) {
 	async connectedCallback() {
 		super.connectedCallback();
 		await this.dispatch(fetchDailyDate());
-		
-		const state = this.getState();
-		const dailyDate = state.date.dailyDate;
-		
-		if (dailyDate) {
-			const savedProgress = loadCurrentProgress(dailyDate);
-			
-			if (savedProgress) {
-				const result = await this.dispatch(fetchRounds());
-				
-				if (fetchRounds.fulfilled.match(result)) {
-					this.dispatch(restoreProgress({
-						score: savedProgress.score,
-						currentRound: savedProgress.currentRound,
-						roundResults: savedProgress.roundResults
-					}));
-				}
-			}
-		}
 	}
 
 	render() {
-		const { gameInProgress, gameComplete } = this.getState().gameStatus;
+		const { currentMode } = this.getState().gameMode;
+		const reviewsGame = this.getState().reviewsGame;
+		const tagsGame = this.getState().tagsGame;
+		
+		const gameInProgress = currentMode === 'reviews' ? reviewsGame.gameInProgress : tagsGame.gameInProgress;
+		const gameComplete = currentMode === 'reviews' ? reviewsGame.gameComplete : tagsGame.gameComplete;
+		
 		const { dailyDate } = this.getState().date;
 
 		return html`
@@ -127,17 +112,19 @@ class App extends ReduxMixin(LitElement) {
 			</header>
 			
 			<main>
-				${!gameInProgress && !gameComplete 
-					? html`<start-screen></start-screen>`
-					: html`<games-container></games-container>`
+				${gameInProgress || gameComplete
+					? currentMode === 'tags'
+						? html`<tags-game-container></tags-game-container>`
+						: html`<games-container></games-container>`
+					: html`<start-screen></start-screen>`
 				}
 			</main>
 
-			${gameInProgress || gameComplete ? html`<game-status></game-status>` : ''}
+			${gameInProgress && currentMode === 'reviews' ? html`<game-status></game-status>` : ''}
 
 			<footer>steam review thing by josh</footer>
 
-			${gameInProgress || gameComplete ? html`<game-results-modal></game-results-modal>` : ''}
+			${gameComplete && currentMode === 'reviews' ? html`<game-results-modal></game-results-modal>` : ''}
 		`;
 	}
 }

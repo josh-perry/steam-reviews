@@ -1,11 +1,15 @@
 import { configureStore } from '@reduxjs/toolkit';
-import gameStatusReducer from './slices/gameStatusSlice';
+import gameModeReducer from './slices/gameModeSlice';
+import reviewsGameReducer from './slices/reviewsGameSlice';
+import tagsGameReducer from './slices/tagsGameSlice';
 import dateReducer from './slices/dateSlice';
 import { gameCompleteMiddleware } from './middleware/gameCompleteMiddleware';
 
 export const store = configureStore({
   reducer: {
-    gameStatus: gameStatusReducer,
+    gameMode: gameModeReducer,
+    reviewsGame: reviewsGameReducer,
+    tagsGame: tagsGameReducer,
     date: dateReducer,
   },
   middleware: (getDefaultMiddleware) =>

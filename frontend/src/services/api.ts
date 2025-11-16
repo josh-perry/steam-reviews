@@ -42,7 +42,7 @@ class ApiService {
 
   async getDailyDate(): Promise<ApiResponse<{ dailyDate: Date }>> {
     const response = await this.fetchWithErrorHandling<{ dailyDate: string }>(`${API_BASE_URL}/date`);
-    
+
     if (response.data) {
       return {
         data: {
@@ -50,10 +50,14 @@ class ApiService {
         }
       };
     }
-    
+
     return {
       error: response.error
     };
+  }
+
+  async getGameNames(): Promise<ApiResponse<string[]>> {
+    return this.fetchWithErrorHandling<string[]>(`${API_BASE_URL}/game-names`);
   }
 }
 

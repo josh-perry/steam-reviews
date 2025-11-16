@@ -14,6 +14,7 @@ const app = express();
 const PORT = parseInt(process.env.PORT || '5000', 10);
 const dbPath = path.join(__dirname, '..', 'data', 'games.sqlite');
 const roundsFilePath = path.join(__dirname, '..', 'data', 'daily-rounds.json');
+const gameNamesFilePath = path.join(__dirname, '..', 'data', 'game-names.json');
 
 app.set('trust proxy', 1);
 
@@ -26,6 +27,7 @@ interface Game {
     rating: number;
     reviewCount: number;
     imgUrl?: string;
+    tags?: string[];
 }
 
 interface GameRound {
@@ -238,6 +240,7 @@ const transformDatabaseRow = async (row: any): Promise<Game> => ({
         : 0,
     reviewCount: row.total_reviews || 0,
     imgUrl: await getHeroImageUrl(row.id).catch(() => undefined),
+    tags: await getGameTags(row.id).catch(() => []),
 });
 
 const fetchGamesFromDatabase = async (): Promise<Game[]> => {
@@ -336,6 +339,83 @@ const getHeroImageUrl = (appId: number): Promise<string> => {
     });
 }
 
+const getGameTags = (appId: number): Promise<string[]> => {
+    return new Promise((resolve, reject) => {
+        const query = `
+            SELECT t.name 
+            FROM app 
+            JOIN app_tag at ON at.app_id = app.id 
+            JOIN tag t ON t.id = at.tag_id 
+            WHERE app.id = ?
+            ORDER BY at.votes DESC
+            LIMIT 10
+        `;
+        
+        db.all(query, [appId], (err, rows: any[]) => {
+            if (err) {
+                console.error(`Error fetching tags for appId ${appId}:`, err.message);
+                reject(err);
+                return;
+            }
+            
+            const tags = rows.map(row => row.name);
+            resolve(tags);
+        });
+    });
+};
+
+const fetchAllGameNames = (): Promise<string[]> => {
+    return new Promise((resolve, reject) => {
+        const query = `
+            SELECT name 
+            FROM app 
+            WHERE adult = 0 AND total_reviews > 5000 
+            ORDER BY name ASC
+        `;
+        
+        db.all(query, [], (err, rows: any[]) => {
+            if (err) {
+                console.error('Error fetching game names:', err.message);
+                reject(err);
+                return;
+            }
+            
+            const names = rows.map(row => row.name);
+            console.log(`Fetched ${names.length} game names for autocomplete`);
+            resolve(names);
+        });
+    });
+};
+
+const generateGameNamesFile = async (): Promise<void> => {
+    console.log('Generating game names file for autocomplete...');
+    
+    const names = await fetchAllGameNames();
+    
+    const dataDir = path.dirname(gameNamesFilePath);
+    if (!fs.existsSync(dataDir)) {
+        fs.mkdirSync(dataDir, { recursive: true });
+    }
+    
+    fs.writeFileSync(gameNamesFilePath, JSON.stringify(names, null, 2));
+    
+    const stats = fs.statSync(gameNamesFilePath);
+    const fileSizeKB = (stats.size / 1024).toFixed(2);
+    console.log(`Game names file created: ${fileSizeKB} KB (${names.length} games)`);
+};
+
+const initializeGameNames = async (): Promise<void> => {
+    if (fs.existsSync(gameNamesFilePath)) {
+        const stats = fs.statSync(gameNamesFilePath);
+        const fileSizeKB = (stats.size / 1024).toFixed(2);
+        console.log(`Game names file exists (${fileSizeKB} KB), skipping generation`);
+        return;
+    }
+    
+    console.log('Game names file not found, generating...');
+    await generateGameNamesFile();
+};
+
 app.get('/api/health', (req, res) => {
     res.json({ status: 'OK', message: 'Steam Reviews API is running' });
 });
@@ -359,6 +439,21 @@ app.get('/api/rounds', async (req, res) => {
     }
 });
 
+app.get('/api/game-names', async (req, res) => {
+    try {
+        if (!fs.existsSync(gameNamesFilePath)) {
+            await generateGameNamesFile();
+        }
+        
+        const fileContent = fs.readFileSync(gameNamesFilePath, 'utf8');
+        const gameNames = JSON.parse(fileContent);
+        res.json(gameNames);
+    } catch (error) {
+        console.error('Error serving game names:', error);
+        res.status(500).json({ error: 'Failed to get game names' });
+    }
+});
+
 process.on('SIGINT', () => {
     if (db) {
         db.close((err) => {
@@ -378,6 +473,7 @@ const startServer = async (): Promise<void> => {
     try {
         await initializeDatabase();
         await connectToDatabase();
+        await initializeGameNames();
         
         app.listen(PORT, '0.0.0.0', () => {
             console.log(`Server is running on port ${PORT}`);

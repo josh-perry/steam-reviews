@@ -1,6 +1,6 @@
 import { LitElement, html, css } from 'lit';
-import { ReduxMixin } from '../store/ReduxMixin';
-import { getStreakInfo, getTodaysResult } from '../services/localSave';
+import { ReduxMixin } from '../../store/ReduxMixin';
+import { getStreakInfo, getTodaysResult } from '../../services/localSave';
 
 class GameResultsModal extends ReduxMixin(LitElement) {
 	static styles = css`
@@ -191,12 +191,14 @@ class GameResultsModal extends ReduxMixin(LitElement) {
 	private shareButtonText = 'Share Results';
 
 	private async handleShare() {
-		const { gameComplete, totalRounds } = this.getState().gameStatus;
+		const gameState = this.getState().reviewsGame;
+		
+		const { totalRounds } = gameState;
         const { dailyDate } = this.getState().date;
 		
 		const todayResult = dailyDate ? getTodaysResult(dailyDate) : null;
-		const displayScore = todayResult ? todayResult.numberCorrect : this.getState().gameStatus.score;
-		const displayRoundResults = todayResult ? todayResult.roundResults : this.getState().gameStatus.roundResults;
+		const displayScore = todayResult ? todayResult.numberCorrect : gameState.score;
+		const displayRoundResults = todayResult ? todayResult.roundResults : gameState.roundResults;
 		
 		const emojiResults = displayRoundResults.map(r => {
 			if (typeof r === 'boolean') {
@@ -255,7 +257,9 @@ class GameResultsModal extends ReduxMixin(LitElement) {
 	}
 
 	render() {
-		const { gameComplete, score, totalRounds, roundResults } = this.getState().gameStatus;
+		const gameState = this.getState().reviewsGame;
+		
+		const { gameComplete, score, totalRounds, roundResults } = gameState;
         const { dailyDate } = this.getState().date;
 
 		const todayResult = dailyDate ? getTodaysResult(dailyDate) : null;

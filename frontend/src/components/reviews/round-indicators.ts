@@ -1,11 +1,12 @@
 import { LitElement, html, css } from 'lit';
 import { property } from 'lit/decorators.js';
-import { ReduxMixin } from '../store/ReduxMixin';
-import type { RoundResult } from '../store/slices/gameStatusSlice';
+import { ReduxMixin } from '../../store/ReduxMixin';
+import type { RoundResult } from '../../store/slices/reviewsGameSlice';
+import type { TagsRoundResult } from '../../store/slices/tagsGameSlice';
 
 class RoundIndicators extends ReduxMixin(LitElement) {
     @property({ type: Array })
-    declare roundResults: RoundResult[];
+    declare roundResults: RoundResult[] | TagsRoundResult[];
 
     static styles = css`
         :host {
@@ -77,7 +78,10 @@ class RoundIndicators extends ReduxMixin(LitElement) {
             return html``;
         }
 
-        const { showResultColors, currentRound } = this.getState().gameStatus;
+        const { currentMode } = this.getState().gameMode;
+        const gameState = this.getState().reviewsGame;
+        
+        const { showResultColors, currentRound } = gameState;
 
         const roundIndicators = this.roundResults.map((r, index) => {
             let className = 'round-indicator';

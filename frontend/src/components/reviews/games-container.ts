@@ -1,6 +1,6 @@
 import { LitElement, html, css } from 'lit';
-import { ReduxMixin } from '../store/ReduxMixin';
-import { getCurrentRoundData } from '../store/slices/gameStatusSlice';
+import { ReduxMixin } from '../../store/ReduxMixin';
+import { getCurrentRoundData } from '../../store/slices/reviewsGameSlice';
 
 class GamesContainer extends ReduxMixin(LitElement) {
 	static styles = css`
@@ -30,14 +30,14 @@ class GamesContainer extends ReduxMixin(LitElement) {
 	`;
 
 	render() {
-		const { showingResults } = this.getState().gameStatus;
+		const { showingResults } = this.getState().reviewsGame;
 		const currentRound = getCurrentRoundData(this.getState());
 		
 		if (!currentRound) {
 			return html``;
 		}
 
-		const state = this.getState().gameStatus;
+		const state = this.getState().reviewsGame;
 		const currentRoundResult = state.roundResults[state.currentRound - 1];
 		const selectedGameId = currentRoundResult?.selectedGame?.appId;
 

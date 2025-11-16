@@ -1,5 +1,5 @@
 import { LitElement, html, css } from 'lit';
-import { ReduxMixin } from '../store/ReduxMixin';
+import { ReduxMixin } from '../../store/ReduxMixin';
 
 class GameStatus extends ReduxMixin(LitElement) {
     static styles = css`
@@ -61,19 +61,21 @@ class GameStatus extends ReduxMixin(LitElement) {
     `;
 
     render() {
-        const gameStatus = this.getState().gameStatus;
+        const gameState = this.getState().reviewsGame;
+        
+        const { gameInProgress } = gameState;
 
-        if (!gameStatus || !gameStatus.gameInProgress) {
+        if (!gameInProgress) {
             return html``;
         }
 
         return html`
             <div class="status-container">
                 <round-indicators 
-                    .roundResults=${gameStatus.roundResults}>
+                    .roundResults=${gameState.roundResults}>
                 </round-indicators>
                 <div class="score-info">
-                    <span class="current-round">Round ${gameStatus.currentRound}/${gameStatus.totalRounds}</span>
+                    <span class="current-round">Round ${gameState.currentRound}/${gameState.totalRounds}</span>
                 </div>
             </div>
         `;

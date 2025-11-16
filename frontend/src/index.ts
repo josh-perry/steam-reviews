@@ -1,10 +1,12 @@
 import './components/app';
-import './components/game';
-import './components/game-status';
-import './components/games-container';
 import './components/start-screen';
-import './components/game-results-modal';
-import './components/round-indicators';
+import './components/reviews/game-status';
+import './components/reviews/game-results-modal';
 import './components/results-summary';
+import './components/reviews/game';
+import './components/reviews/games-container';
+import './components/reviews/round-indicators';
+import './components/tags/tags-game-container';
+import './components/tags/tags-game-round';
 
 console.log('Steam reviews app loaded');

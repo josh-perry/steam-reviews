@@ -1,8 +1,8 @@
 import { LitElement, html, css } from 'lit';
 import { property } from 'lit/decorators.js';
-import { ReduxMixin } from '../store/ReduxMixin';
-import { submitRoundAnswer, getCurrentRoundData } from '../store/slices/gameStatusSlice';
-import type { Game } from '../store/slices/gameStatusSlice';
+import { ReduxMixin } from '../../store/ReduxMixin';
+import { submitRoundAnswer } from '../../store/slices/reviewsGameSlice';
+import type { Game } from '../../store/slices/reviewsGameSlice';
 
 class GameComponent extends ReduxMixin(LitElement) {
 	@property({ type: Object })
@@ -224,7 +224,7 @@ class GameComponent extends ReduxMixin(LitElement) {
 	}
 
 	private handleClick() {
-		const { gameInProgress, currentRoundAnswered } = this.getState().gameStatus;
+		const { gameInProgress, currentRoundAnswered } = this.getState().reviewsGame;
 		
 		if (gameInProgress && !currentRoundAnswered) {
 			this.dispatch(submitRoundAnswer({ selectedGame: this.game }));
@@ -232,7 +232,7 @@ class GameComponent extends ReduxMixin(LitElement) {
 	}
 
 	private updateHostClasses() {
-		const { currentRoundAnswered, showResultColors } = this.getState().gameStatus;
+		const { currentRoundAnswered, showResultColors } = this.getState().reviewsGame;
 		
 		this.classList.remove('disabled', 'correct', 'incorrect', 'not-selected', 'selected');
 

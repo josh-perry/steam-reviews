@@ -30,38 +30,34 @@ export interface GameRound {
 	correctGame: Game;
 }
 
-interface GameStatusState {
+interface ReviewsGameState {
 	currentRound: number;
 	totalRounds: number;
 	roundResults: RoundResult[];
 	preGeneratedRounds: GameRound[];
-	gameInProgress: boolean;
-	gameComplete: boolean;
 	score: number;
-	loading: boolean;
 	currentRoundAnswered: boolean;
 	showingResults: boolean;
 	showResultColors: boolean;
-	error: string | null;
+	gameInProgress: boolean;
+	gameComplete: boolean;
 }
 
-const initialState: GameStatusState = {
+const initialState: ReviewsGameState = {
 	currentRound: 0,
 	totalRounds: 10,
 	roundResults: [],
 	preGeneratedRounds: [],
-	gameInProgress: false,
-	gameComplete: false,
 	score: 0,
-	loading: false,
 	currentRoundAnswered: false,
 	showingResults: false,
 	showResultColors: false,
-	error: null,
+	gameInProgress: false,
+	gameComplete: false,
 };
 
 export const fetchRounds = createAsyncThunk(
-	'gameStatus/fetchRounds',
+	'reviewsGame/fetchRounds',
 	async (_, { rejectWithValue }) => {
 		const response = await apiService.getRounds();
 		if (response.error) {
@@ -71,8 +67,8 @@ export const fetchRounds = createAsyncThunk(
 	}
 );
 
-export const startGameWithData = createAsyncThunk(
-	'gameStatus/startGameWithData',
+export const startReviewsGame = createAsyncThunk(
+	'reviewsGame/startGame',
 	async (_, { dispatch, getState }) => {
 		const result = await dispatch(fetchRounds());
 		if (fetchRounds.rejected.match(result)) {
@@ -90,13 +86,13 @@ export const startGameWithData = createAsyncThunk(
 	}
 );
 
-export const getCurrentRoundData = (state: { gameStatus: GameStatusState }): GameRound | null => {
-	const { currentRound, preGeneratedRounds } = state.gameStatus;
+export const getCurrentRoundData = (state: { reviewsGame: ReviewsGameState }): GameRound | null => {
+	const { currentRound, preGeneratedRounds } = state.reviewsGame;
 	return preGeneratedRounds[currentRound - 1] || null;
 };
 
-const gameStatusSlice = createSlice({
-	name: 'gameStatus',
+const reviewsGameSlice = createSlice({
+	name: 'reviewsGame',
 	initialState,
 	reducers: {
 		submitRoundAnswer: (state, action: PayloadAction<{ selectedGame: Game }>) => {
@@ -173,10 +169,10 @@ const gameStatusSlice = createSlice({
 			
 			state.score = score;
 			state.currentRound = currentRound;
-			state.gameInProgress = true;
-			state.gameComplete = false;
 			state.currentRoundAnswered = false;
 			state.showingResults = false;
+			state.gameInProgress = true;
+			state.gameComplete = false;
 			
 			savedRoundResults.forEach((savedRound, index) => {
 				if (index < state.roundResults.length) {
@@ -189,10 +185,9 @@ const gameStatusSlice = createSlice({
 						roundResult.played = true;
 						roundResult.resultVisible = true;
 					}
-				}
-				});
+				 }
+			});
 			
-			// Needed if user refreshes while on last round
 			const allRoundsPlayed = state.roundResults.every(round => round.played);
 			if (allRoundsPlayed) {
 				state.gameComplete = true;
@@ -200,24 +195,16 @@ const gameStatusSlice = createSlice({
 			}
 		},
 		
-		setLoading: (state, action: PayloadAction<boolean>) => {
-			state.loading = action.payload;
+		resetReviewsGame: () => initialState,
+		
+		showCompletedGame: (state) => {
+			state.gameComplete = true;
+			state.gameInProgress = false;
 		},
-
-		clearError: (state) => {
-			state.error = null;
-		}
 	},
 	extraReducers: (builder) => {
 		builder
-			.addCase(fetchRounds.pending, (state) => {
-				state.loading = true;
-				state.error = null;
-			})
 			.addCase(fetchRounds.fulfilled, (state, action) => {
-				state.loading = false;
-				state.error = null;
-				
 				state.preGeneratedRounds = action.payload;
 				state.roundResults = state.preGeneratedRounds.map((round) => ({
 					gameA: round.gameA,
@@ -229,16 +216,7 @@ const gameStatusSlice = createSlice({
 					resultVisible: false
 				}));
 			})
-			.addCase(fetchRounds.rejected, (state, action) => {
-				state.loading = false;
-				state.error = action.payload as string || 'Failed to fetch rounds';
-			})
-			.addCase(startGameWithData.pending, (state) => {
-				state.loading = true;
-				state.error = null;
-			})
-			.addCase(startGameWithData.fulfilled, (state, action) => {
-				state.loading = false;
+			.addCase(startReviewsGame.fulfilled, (state, action) => {
 				state.gameInProgress = true;
 				state.gameComplete = false;
 				state.currentRound = 1;
@@ -257,10 +235,6 @@ const gameStatusSlice = createSlice({
 					played: false,
 					resultVisible: false
 				}));
-			})
-			.addCase(startGameWithData.rejected, (state, action) => {
-				state.loading = false;
-				state.error = action.error.message || 'Failed to start game';
 			});
 	}
 });
@@ -271,8 +245,8 @@ export const {
 	showRoundResultColors,
 	proceedToNextRound,
 	restoreProgress,
-	setLoading,
-	clearError
-} = gameStatusSlice.actions;
+	resetReviewsGame,
+	showCompletedGame
+} = reviewsGameSlice.actions;
 
-export default gameStatusSlice.reducer;
+export default reviewsGameSlice.reducer;
