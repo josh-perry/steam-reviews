@@ -215,10 +215,6 @@ class StartScreen extends ReduxMixin(LitElement) {
 		const { currentMode } = this.getState().gameMode;
 		const { dailyDate } = this.getState().date;
 
-		if (currentMode === 'tags') {
-			return;
-		}
-
 		if (dailyDate && hasPlayedToday(dailyDate)) {
 			if (currentMode === 'reviews') {
 				const result = await this.dispatch(fetchRounds());

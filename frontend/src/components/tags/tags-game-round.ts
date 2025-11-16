@@ -59,6 +59,13 @@ class TagsGameRound extends ReduxMixin(LitElement) {
 			text-align: center;
 		}
 
+		.attempts-counter {
+			text-align: center;
+			font-size: 1rem;
+			color: #666;
+			font-weight: 500;
+		}
+
 		.input-container {
 			display: flex;
 			gap: 0.5rem;
@@ -104,6 +111,38 @@ class TagsGameRound extends ReduxMixin(LitElement) {
 			cursor: not-allowed;
 		}
 
+		.previous-guesses {
+			display: flex;
+			flex-direction: column;
+			gap: 0.5rem;
+		}
+
+		.previous-guesses h4 {
+			margin: 0;
+			font-size: 1.1rem;
+			color: #333;
+		}
+
+		.guesses-list {
+			display: flex;
+			flex-direction: column;
+			gap: 0.5rem;
+			max-height: 200px;
+			overflow-y: auto;
+			padding: 0.5rem;
+			background: #f8f9fa;
+			border-radius: 8px;
+		}
+
+		.guess-item {
+			padding: 0.5rem 0.75rem;
+			background: white;
+			border-left: 3px solid #dc3545;
+			border-radius: 4px;
+			font-size: 0.95rem;
+			color: #333;
+		}
+
 		.result-container {
 			padding: 1rem;
 			border-radius: 8px;
@@ -130,6 +169,12 @@ class TagsGameRound extends ReduxMixin(LitElement) {
 		.result-container .correct-answer {
 			font-size: 1.1rem;
 			font-weight: bold;
+		}
+
+		img {
+			width: 100%;
+			height: 100%;
+			margin-top: 1rem;
 		}
 
 		@media (max-width: 768px) {
@@ -194,6 +239,8 @@ class TagsGameRound extends ReduxMixin(LitElement) {
 			const isCorrect = normalizedGuess === normalizedCorrectName;
 			
 			this.dispatch(submitGuess({ guess: this.currentGuess, isCorrect }));
+			
+			this.currentGuess = '';
 		}
 	}
 
@@ -204,11 +251,17 @@ class TagsGameRound extends ReduxMixin(LitElement) {
 	}
 
 	render() {
-		const { currentRoundAnswered, showResultColors, roundResults, currentRound } = this.getState().tagsGame;
+		const { currentRoundAnswered, showResultColors, roundResults, currentRound, currentGuesses, maxGuesses } = this.getState().tagsGame;
 		
 		const tags = this.game.tags || [];
 		const currentRoundResult = roundResults[currentRound - 1];
 		const isCorrect = currentRoundResult?.isCorrect;
+		const remainingGuesses = maxGuesses - currentGuesses.length;
+		
+		const normalizedCorrectName = this.game.name.toLowerCase();
+		const incorrectGuesses = currentGuesses.filter(guess => 
+			guess.trim().toLowerCase() !== normalizedCorrectName
+		);
 
 		return html`
 			<div class="tags-container">
@@ -220,6 +273,11 @@ class TagsGameRound extends ReduxMixin(LitElement) {
 
 			<div class="guess-section">
 				<h3>What game is this?</h3>
+				${!currentRoundAnswered ? html`
+					<div class="attempts-counter">
+						${remainingGuesses} ${remainingGuesses === 1 ? 'guess' : 'guesses'} remaining
+					</div>
+				` : ''}
 				<div class="input-container">
 					<input
 						type="text"
@@ -242,11 +300,27 @@ class TagsGameRound extends ReduxMixin(LitElement) {
 				</div>
 			</div>
 
+				${incorrectGuesses.length > 0 ? html`
+				<div class="previous-guesses">
+					<h4>Incorrect Guesses (${incorrectGuesses.length})</h4>
+					<div class="guesses-list">
+						${incorrectGuesses.map(guess => html`
+							<div class="guess-item">${guess}</div>
+						`)}
+					</div>
+				</div>
+			` : ''}
+
 			${currentRoundAnswered && showResultColors ? html`
 				<div class="result-container ${isCorrect ? 'correct' : 'incorrect'}">
-					<h4>${isCorrect ? '✓ Correct!' : '✗ Incorrect'}</h4>
+					<h4>${isCorrect ? `You got it!` : 'Out of guesses!'}</h4>
 					<div class="correct-answer">
 						The answer was: <strong>${this.game.name}</strong>
+
+						<img 
+							src="${this.game.imgUrl}" 
+							alt="${this.game.name}"
+						/>
 					</div>
 				</div>
 			` : ''}

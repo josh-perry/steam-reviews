@@ -50,15 +50,15 @@ export const gameCompleteMiddleware: Middleware = (store) => (next) => (action: 
 	}
 
 	if (action.type === 'tagsGame/submitGuess') {
-		store.dispatch(showTagsRoundResult());
+		const { currentRoundAnswered } = nextState.tagsGame;
+		
+		if (currentRoundAnswered) {
+			store.dispatch(showTagsRoundResult());
 
-		setTimeout(() => {
-			store.dispatch(showTagsRoundResultColors());
-		}, ANIMATION_DURATION);
-
-		setTimeout(() => {
-			store.dispatch(proceedTagsToNextRound());
-		}, TOTAL_WAIT);
+			setTimeout(() => {
+				store.dispatch(showTagsRoundResultColors());
+			}, ANIMATION_DURATION);
+		}
 
 		const { dailyDate } = nextState.date;
 		const { score, currentRound, roundResults } = nextState.tagsGame;

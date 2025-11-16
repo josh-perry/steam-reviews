@@ -15,7 +15,7 @@ export interface Game {
 
 export interface TagsRoundResult {
 	correctGame: Game;
-	userGuess: string | null;
+	userGuesses: string[];
 	isCorrect: boolean;
 	played: boolean;
 	resultVisible: boolean;
@@ -32,6 +32,8 @@ interface TagsGameState {
 	showResultColors: boolean;
 	gameInProgress: boolean;
 	gameComplete: boolean;
+	currentGuesses: string[];
+	maxGuesses: number;
 }
 
 const initialState: TagsGameState = {
@@ -45,6 +47,8 @@ const initialState: TagsGameState = {
 	showResultColors: false,
 	gameInProgress: false,
 	gameComplete: false,
+	currentGuesses: [],
+	maxGuesses: 10,
 };
 
 export const fetchTagGame = createAsyncThunk(
@@ -90,13 +94,19 @@ const tagsGameSlice = createSlice({
 			const { guess, isCorrect } = action.payload;
 			const currentRoundIndex = state.currentRound - 1;
 			
-			state.currentRoundAnswered = true;
-			state.showingResults = true;
+			state.currentGuesses.push(guess);
+			
+			const shouldEndRound = isCorrect || state.currentGuesses.length >= state.maxGuesses;
+			
+			if (shouldEndRound) {
+				state.currentRoundAnswered = true;
+				state.showingResults = true;
+			}
 			
 			if (currentRoundIndex >= 0 && currentRoundIndex < state.roundResults.length) {
 				const roundResult = state.roundResults[currentRoundIndex];
 				
-				roundResult.userGuess = guess;
+				roundResult.userGuesses = [...state.currentGuesses];
 				roundResult.isCorrect = isCorrect;
 				roundResult.played = true;
 				roundResult.resultVisible = false;
@@ -123,6 +133,7 @@ const tagsGameSlice = createSlice({
 		proceedToNextRound: (state) => {
 			state.showingResults = false;
 			state.showResultColors = false;
+			state.currentGuesses = [];
 			
 			if (state.currentRound >= state.totalRounds) {
 				state.gameComplete = true;
@@ -141,7 +152,7 @@ const tagsGameSlice = createSlice({
 				state.dailyGame = action.payload;
 				state.roundResults = [{
 					correctGame: action.payload,
-					userGuess: null,
+					userGuesses: [],
 					isCorrect: false,
 					played: false,
 					resultVisible: false
@@ -154,12 +165,13 @@ const tagsGameSlice = createSlice({
 				state.score = 0;
 				state.currentRoundAnswered = false;
 				state.showingResults = false;
+				state.currentGuesses = [];
 				
 				state.dailyGame = action.payload;
 				
 				state.roundResults = [{
 					correctGame: action.payload,
-					userGuess: null,
+					userGuesses: [],
 					isCorrect: false,
 					played: false,
 					resultVisible: false
