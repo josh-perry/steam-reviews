@@ -1,8 +1,9 @@
 import { LitElement, html, css } from 'lit';
 import { property } from 'lit/decorators.js';
+import { ReduxMixin } from '../store/ReduxMixin';
 import type { RoundResult } from '../store/slices/gameStatusSlice';
 
-class RoundIndicators extends LitElement {
+class RoundIndicators extends ReduxMixin(LitElement) {
     @property({ type: Array })
     declare roundResults: RoundResult[];
 
@@ -76,10 +77,15 @@ class RoundIndicators extends LitElement {
             return html``;
         }
 
-        const roundIndicators = this.roundResults.map((r) => {
+        const { showResultColors, currentRound } = this.getState().gameStatus;
+
+        const roundIndicators = this.roundResults.map((r, index) => {
             let className = 'round-indicator';
             
-            if (r.played && r.resultVisible) {
+            const isCurrentRound = index === currentRound - 1;
+            const shouldShowColors = r.played && r.resultVisible && (isCurrentRound ? showResultColors : true);
+            
+            if (shouldShowColors) {
                 if (r.isCorrect) {
                     className += ' correct';
                 } else {
