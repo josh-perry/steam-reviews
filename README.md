@@ -1,5 +1,5 @@
 # steam reviews
-A daily (*dle) game about guessing which Steam games have higher reviews.
+A daily (*dle) game about guessing which Steam games have higher reviews + a game about guessing the correct steam game based on store tags!
 
 Play it [here](https://steam.literallyjosh.com/)!
 
@@ -15,10 +15,6 @@ Alternatively with Docker:
 ```bash
 docker compose up --build
 ```
-
-## API Endpoints
-- `GET /api/health` - Health check endpoint
-- `GET /api/rounds` - Get the game for today
 
 ## Technologies
 ### Frontend
