@@ -4,6 +4,7 @@ import { ReduxMixin } from '../../store/ReduxMixin';
 import { submitGuess } from '../../store/slices/tagsGameSlice';
 import { apiService } from '../../services/api';
 import type { Game } from '../../store/slices/tagsGameSlice';
+import levenshtein from 'levenshtein';
 
 class TagsGameRound extends ReduxMixin(LitElement) {
 	@property({ type: Object })
@@ -143,6 +144,10 @@ class TagsGameRound extends ReduxMixin(LitElement) {
 			color: #333;
 		}
 
+		.guess-item.close {
+			border-left-color: #ffc107;
+		}
+
 		.result-container {
 			padding: 1rem;
 			border-radius: 8px;
@@ -254,6 +259,7 @@ class TagsGameRound extends ReduxMixin(LitElement) {
 		const { currentRoundAnswered, showResultColors, roundResults, currentRound, currentGuesses, maxGuesses } = this.getState().tagsGame;
 		
 		const tags = this.game.tags || [];
+		const hints: string[] = [];
 		const currentRoundResult = roundResults[currentRound - 1];
 		const isCorrect = currentRoundResult?.isCorrect;
 		const remainingGuesses = maxGuesses - currentGuesses.length;
@@ -263,6 +269,11 @@ class TagsGameRound extends ReduxMixin(LitElement) {
 			guess.trim().toLowerCase() !== normalizedCorrectName
 		);
 
+		function isCloseGuess(guess: string): boolean {
+			const distance = new levenshtein(guess.toLowerCase(), normalizedCorrectName).distance;
+			return distance <= normalizedCorrectName.length * 0.3;
+		}
+
 		return html`
 			<div class="tags-container">
 				${tags.length > 0 
@@ -271,6 +282,14 @@ class TagsGameRound extends ReduxMixin(LitElement) {
 				}
 			</div>
 
+			${hints.length > 0 ? html`
+			<div class="hints-container">
+				<h4>Hints:</h4>
+				<ul>
+					${hints.map(hint => html`<li>${hint}</li>`)}
+				</ul>
+			</div>` : ''}
+
 			<div class="guess-section">
 				<h3>What game is this?</h3>
 				${!currentRoundAnswered ? html`
@@ -278,6 +297,7 @@ class TagsGameRound extends ReduxMixin(LitElement) {
 						${remainingGuesses} ${remainingGuesses === 1 ? 'guess' : 'guesses'} remaining
 					</div>
 				` : ''}
+
 				<div class="input-container">
 					<input
 						type="text"
@@ -299,13 +319,12 @@ class TagsGameRound extends ReduxMixin(LitElement) {
 					</button>
 				</div>
 			</div>
-
 				${incorrectGuesses.length > 0 ? html`
 				<div class="previous-guesses">
 					<h4>Incorrect Guesses (${incorrectGuesses.length})</h4>
 					<div class="guesses-list">
 						${incorrectGuesses.map(guess => html`
-							<div class="guess-item">${guess}</div>
+							<div class="guess-item ${isCloseGuess(guess) ? 'close' : ''}">${guess}</div>
 						`)}
 					</div>
 				</div>
