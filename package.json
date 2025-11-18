@@ -14,14 +14,10 @@
     "start": "npm --prefix api start"
   },
   "devDependencies": {
-    "@types/levenshtein": "^1.0.4",
     "concurrently": "^8.2.2"
   },
   "workspaces": [
     "frontend",
     "api"
-  ],
-  "dependencies": {
-    "levenshtein": "^1.0.5"
-  }
+  ]
 }
