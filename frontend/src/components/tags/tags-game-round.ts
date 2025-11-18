@@ -274,6 +274,20 @@ class TagsGameRound extends ReduxMixin(LitElement) {
 		}
 
 		return html`
+			${currentRoundAnswered && showResultColors ? html`
+				<div class="result-container ${isCorrect ? 'correct' : 'incorrect'}">
+					<h4>${isCorrect ? `You got it!` : 'Out of guesses!'}</h4>
+					<div class="correct-answer">
+						The answer was: <strong>${this.game.name}</strong>
+
+						<img 
+							src="${this.game.imgUrl}" 
+							alt="${this.game.name}"
+						/>
+					</div>
+				</div>
+			` : ''}
+
 			<div class="tags-container">
 				${tags.length > 0 
 					? tags.map(tag => html`<div class="tag">${tag}</div>`)
@@ -325,20 +339,6 @@ class TagsGameRound extends ReduxMixin(LitElement) {
 						${incorrectGuesses.map(guess => html`
 							<div class="guess-item ${isCloseGuess(guess) ? 'close' : ''}">${guess}</div>
 						`)}
-					</div>
-				</div>
-			` : ''}
-
-			${currentRoundAnswered && showResultColors ? html`
-				<div class="result-container ${isCorrect ? 'correct' : 'incorrect'}">
-					<h4>${isCorrect ? `You got it!` : 'Out of guesses!'}</h4>
-					<div class="correct-answer">
-						The answer was: <strong>${this.game.name}</strong>
-
-						<img 
-							src="${this.game.imgUrl}" 
-							alt="${this.game.name}"
-						/>
 					</div>
 				</div>
 			` : ''}
