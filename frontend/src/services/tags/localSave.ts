@@ -47,12 +47,8 @@ export function saveDailyResult(day: string, success: boolean, guessesUsed: numb
     if (existingIndex !== -1) {
         save.currentStreak[existingIndex] = { day, success, guessesUsed };
     } else {
-        if (success) {
-            save.currentStreak.push({ day, success, guessesUsed });
-            save.highestStreak = Math.max(save.highestStreak, save.currentStreak.length);
-        } else {
-            save.currentStreak = [{ day, success, guessesUsed }];
-        }
+        save.currentStreak.push({ day, success, guessesUsed });
+        save.highestStreak = Math.max(save.highestStreak, save.currentStreak.length);
     }
     
     localStorage.setItem(SAVE_KEY, JSON.stringify(save));
