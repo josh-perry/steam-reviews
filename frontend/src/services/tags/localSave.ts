@@ -15,6 +15,7 @@ interface DailyResult {
 interface Save {
     currentStreak: DailyResult[];
     highestStreak: number;
+    allDays: { [key: string]: DailyResult };
 }
 
 interface InProgressGame {
@@ -35,18 +36,40 @@ export function saveDailyResult(day: string, success: boolean, guessesUsed: numb
     let save: Save;
     if (saveStr) {
         save = JSON.parse(saveStr);
+        if (!save.allDays) {
+            save.allDays = {};
+        }
     } else {
         save = {
             currentStreak: [],
-            highestStreak: 0
+            highestStreak: 0,
+            allDays: {}
         };
     }
 
-    const existingIndex = save.currentStreak.findIndex(result => result.day === day);
-    
-    if (existingIndex !== -1) {
-        save.currentStreak[existingIndex] = { day, success, guessesUsed };
+    if (save.allDays[day]) {
+        save.allDays[day] = { day, success, guessesUsed };
+        
+        const existingIndex = save.currentStreak.findIndex(result => result.day === day);
+        if (existingIndex !== -1) {
+            save.currentStreak[existingIndex] = { day, success, guessesUsed };
+        }
     } else {
+        save.allDays[day] = { day, success, guessesUsed };
+        
+        if (save.currentStreak.length > 0) {
+            const lastDay = save.currentStreak[save.currentStreak.length - 1].day;
+            const lastDate = new Date(lastDay);
+            const currentDate = new Date(day);
+            
+            const diffTime = currentDate.getTime() - lastDate.getTime();
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+            
+            if (diffDays !== 1) {
+                save.currentStreak = [];
+            }
+        }
+        
         save.currentStreak.push({ day, success, guessesUsed });
         save.highestStreak = Math.max(save.highestStreak, save.currentStreak.length);
     }
@@ -59,6 +82,9 @@ export function hasPlayedToday(day: string): boolean {
 
     if (saveStr) {
         const save: Save = JSON.parse(saveStr);
+        if (save.allDays && save.allDays[day]) {
+            return true;
+        }
         return save.currentStreak.some(result => result.day === day);
     }
 
@@ -70,6 +96,11 @@ export function getTodaysResult(day: string): DailyResult | null {
 
     if (saveStr) {
         const save: Save = JSON.parse(saveStr);
+
+        if (save.allDays && save.allDays[day]) {
+            return save.allDays[day];
+        }
+
         return save.currentStreak.find(result => result.day === day) || null;
     }
 
