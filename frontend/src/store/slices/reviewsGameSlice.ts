@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { apiService, GameRound as ApiGameRound } from '../../services/api';
-import { clearOldProgress } from '../../services/localSave';
+import { clearOldProgress } from '../../services/reviews/localSave';
 import { ImagePreloader } from '../../services/imagePreloader';
 import type { RootState } from '../store';
 

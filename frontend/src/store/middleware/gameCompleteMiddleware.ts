@@ -1,5 +1,6 @@
 import { Middleware } from '@reduxjs/toolkit';
-import { saveDailyResult, saveCurrentProgress, clearCurrentProgress } from '../../services/localSave';
+import { saveDailyResult as saveReviewsDailyResult, saveCurrentProgress as saveReviewsCurrentProgress, clearCurrentProgress as clearReviewsCurrentProgress, hasPlayedToday as hasPlayedTodayReviews } from '../../services/reviews/localSave';
+import { saveDailyResult as saveTagsDailyResult, saveCurrentProgress as saveTagsCurrentProgress, clearCurrentProgress as clearTagsCurrentProgress, hasPlayedToday as hasPlayedTodayTags } from '../../services/tags/localSave';
 import { 
 	showRoundResult as showReviewsRoundResult, 
 	showRoundResultColors as showReviewsRoundResultColors, 
@@ -45,7 +46,7 @@ export const gameCompleteMiddleware: Middleware = (store) => (next) => (action: 
 				isCorrect: round.isCorrect
 			}));
 
-			saveCurrentProgress(dailyDate, score, currentRound, savedRoundResults);
+			saveReviewsCurrentProgress(dailyDate, score, currentRound, savedRoundResults);
 		}
 	}
 
@@ -61,7 +62,7 @@ export const gameCompleteMiddleware: Middleware = (store) => (next) => (action: 
 		}
 
 		const { dailyDate } = nextState.date;
-		const { score, currentRound, roundResults } = nextState.tagsGame;
+		const { score, currentRound, roundResults, currentGuesses, hints } = nextState.tagsGame;
 
 		if (dailyDate) {
 			const savedRoundResults = roundResults.map((round: TagsRoundResult, index: number) => ({
@@ -72,29 +73,30 @@ export const gameCompleteMiddleware: Middleware = (store) => (next) => (action: 
 				isCorrect: round.isCorrect
 			}));
 
-			saveCurrentProgress(dailyDate, score, currentRound, savedRoundResults);
+			saveTagsCurrentProgress(dailyDate, score, currentRound, savedRoundResults, currentGuesses, hints);
 		}
 	}
 
 	if (!prevState.reviewsGame.gameComplete && nextState.reviewsGame.gameComplete) {
 		const { dailyDate } = nextState.date;
 		
-		if (dailyDate) {
+		if (dailyDate && !hasPlayedTodayReviews(dailyDate)) {
 			const { score, roundResults } = nextState.reviewsGame;
 			const booleanResults = roundResults.map((round: RoundResult) => round.isCorrect);
-			saveDailyResult(dailyDate, score, booleanResults);
-			clearCurrentProgress(dailyDate);
+			saveReviewsDailyResult(dailyDate, score, booleanResults);
+			clearReviewsCurrentProgress(dailyDate);
 		}
 	}
 
 	if (!prevState.tagsGame.gameComplete && nextState.tagsGame.gameComplete) {
 		const { dailyDate } = nextState.date;
 		
-		if (dailyDate) {
-			const { score, roundResults } = nextState.tagsGame;
-			const booleanResults = roundResults.map((round: TagsRoundResult) => round.isCorrect);
-			saveDailyResult(dailyDate, score, booleanResults);
-			clearCurrentProgress(dailyDate);
+		if (dailyDate && !hasPlayedTodayTags(dailyDate)) {
+			const { roundResults, currentGuesses } = nextState.tagsGame;
+			const isCorrect = roundResults[0]?.isCorrect || false;
+			const guessesUsed = currentGuesses.length;
+			saveTagsDailyResult(dailyDate, isCorrect, guessesUsed);
+			clearTagsCurrentProgress(dailyDate);
 		}
 	}
 

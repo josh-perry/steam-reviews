@@ -1,6 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import { ReduxMixin } from '../../store/ReduxMixin';
-import { getStreakInfo, getTodaysResult } from '../../services/localSave';
+import { getStreakInfo, getTodaysResult } from '../../services/reviews/localSave';
 
 class GameResultsModal extends ReduxMixin(LitElement) {
 	static styles = css`

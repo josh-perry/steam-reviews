@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { apiService } from '../../services/api';
-import { clearOldProgress } from '../../services/localSave';
+import { clearOldProgress } from '../../services/tags/localSave';
 import type { RootState } from '../store';
 
 export interface Game {
@@ -156,6 +156,53 @@ const tagsGameSlice = createSlice({
 			}
 		},
 		
+		restoreProgress: (state, action: PayloadAction<{
+			score: number;
+			currentRound: number;
+			roundResults: Array<{
+				gameAId: number;
+				gameBId: number;
+				selectedGameId: number;
+				correctGameId: number;
+				isCorrect: boolean;
+			}>;
+			currentGuesses: string[];
+			hints: string[];
+		}>) => {
+			const { score, currentRound, roundResults: savedRoundResults, currentGuesses, hints } = action.payload;
+			
+			state.score = score;
+			state.currentRound = currentRound;
+			state.currentGuesses = currentGuesses;
+			state.hints = hints;
+			state.currentRoundAnswered = false;
+			state.showingResults = false;
+			state.gameInProgress = true;
+			state.gameComplete = false;
+			
+			savedRoundResults.forEach((savedRound, index) => {
+				if (index < state.roundResults.length) {
+					const roundResult = state.roundResults[index];
+					if (savedRound.isCorrect) {
+						roundResult.isCorrect = true;
+						roundResult.played = true;
+						roundResult.resultVisible = true;
+					}
+				}
+			});
+			
+			const allRoundsPlayed = state.roundResults.every(round => round.played);
+			if (allRoundsPlayed) {
+				state.gameComplete = true;
+				state.gameInProgress = false;
+			}
+		},
+		
+		showCompletedGame: (state) => {
+			state.gameComplete = true;
+			state.gameInProgress = false;
+		},
+		
 		resetTagsGame: () => initialState,
 	},
 	extraReducers: (builder) => {
@@ -197,6 +244,8 @@ export const {
 	showRoundResult,
 	showRoundResultColors,
 	proceedToNextRound,
+	restoreProgress,
+	showCompletedGame,
 	resetTagsGame
 } = tagsGameSlice.actions;
 

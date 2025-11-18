@@ -3,9 +3,10 @@ import { state } from 'lit/decorators.js';
 import { ReduxMixin } from '../store/ReduxMixin';
 import { setGameMode } from '../store/slices/gameModeSlice';
 import { startReviewsGame, fetchRounds, restoreProgress, showCompletedGame } from '../store/slices/reviewsGameSlice';
-import { startTagsGame } from '../store/slices/tagsGameSlice';
+import { startTagsGame, fetchTagGame, restoreProgress as restoreTagsProgress, showCompletedGame as showTagsCompletedGame } from '../store/slices/tagsGameSlice';
 import type { GameMode } from '../store/slices/gameModeSlice';
-import { hasPlayedToday, loadCurrentProgress } from '../services/localSave';
+import { hasPlayedToday as hasPlayedTodayReviews, loadCurrentProgress as loadReviewsProgress } from '../services/reviews/localSave';
+import { hasPlayedToday as hasPlayedTodayTags, loadCurrentProgress as loadTagsProgress } from '../services/tags/localSave';
 
 class StartScreen extends ReduxMixin(LitElement) {
 	@state()
@@ -190,8 +191,12 @@ class StartScreen extends ReduxMixin(LitElement) {
 		const { currentMode } = this.getState().gameMode;
 		const { dailyDate } = this.getState().date;
 
-		const playedToday = dailyDate && hasPlayedToday(dailyDate);
-		const hasProgress = dailyDate && loadCurrentProgress(dailyDate) !== null;
+		const playedToday = currentMode === 'reviews' 
+			? dailyDate && hasPlayedTodayReviews(dailyDate)
+			: dailyDate && hasPlayedTodayTags(dailyDate);
+		const hasProgress = currentMode === 'reviews'
+			? dailyDate && loadReviewsProgress(dailyDate) !== null
+			: dailyDate && loadTagsProgress(dailyDate) !== null;
 
 		this.buttonText = 'Start Game';
 
@@ -202,7 +207,11 @@ class StartScreen extends ReduxMixin(LitElement) {
 				this.buttonText = 'Resume Game';
 			}
 		} else if (currentMode === 'tags') {
-			// We don't store progress for tags game yet.
+			if (playedToday) {
+				this.buttonText = 'Show Results';
+			} else if (hasProgress) {
+				this.buttonText = 'Resume Game';
+			}
 		}
 	}
 
@@ -215,33 +224,62 @@ class StartScreen extends ReduxMixin(LitElement) {
 		const { currentMode } = this.getState().gameMode;
 		const { dailyDate } = this.getState().date;
 
-		if (dailyDate && hasPlayedToday(dailyDate)) {
-			if (currentMode === 'reviews') {
-				const result = await this.dispatch(fetchRounds());
-
-				if (fetchRounds.fulfilled.match(result)) {
-					this.dispatch(showCompletedGame());
-				}
-			} else {
-				this.dispatch(startTagsGame());
-			}
-			return;
-		}
-
 		if (dailyDate) {
-			const savedProgress = loadCurrentProgress(dailyDate);
+			const playedToday = currentMode === 'reviews' 
+				? hasPlayedTodayReviews(dailyDate)
+				: hasPlayedTodayTags(dailyDate);
 
-			if (savedProgress && currentMode === 'reviews') {
-				const result = await this.dispatch(fetchRounds());
+			if (playedToday) {
+				if (currentMode === 'reviews') {
+					const result = await this.dispatch(fetchRounds());
 
-				if (fetchRounds.fulfilled.match(result)) {
-					this.dispatch(restoreProgress({
-						score: savedProgress.score,
-						currentRound: savedProgress.currentRound,
-						roundResults: savedProgress.roundResults
-					}));
+					if (fetchRounds.fulfilled.match(result)) {
+						this.dispatch(showCompletedGame());
+					}
+				} else {
+					const result = await this.dispatch(fetchTagGame());
+
+					if (fetchTagGame.fulfilled.match(result)) {
+						this.dispatch(showTagsCompletedGame());
+					}
 				}
 				return;
+			}
+
+			if (currentMode === 'reviews') {
+				const savedProgress = loadReviewsProgress(dailyDate);
+				
+				if (savedProgress) {
+					const result = await this.dispatch(fetchRounds());
+
+					if (fetchRounds.fulfilled.match(result)) {
+						this.dispatch(restoreProgress({
+							score: savedProgress.score,
+							currentRound: savedProgress.currentRound,
+							roundResults: savedProgress.roundResults
+						}));
+					}
+					return;
+				}
+			}
+
+			if (currentMode === 'tags') {
+				const savedProgress = loadTagsProgress(dailyDate);
+				
+				if (savedProgress) {
+					const result = await this.dispatch(fetchTagGame());
+
+					if (fetchTagGame.fulfilled.match(result)) {
+						this.dispatch(restoreTagsProgress({
+							score: savedProgress.score,
+							currentRound: savedProgress.currentRound,
+							roundResults: savedProgress.roundResults,
+							currentGuesses: savedProgress.currentGuesses ?? [],
+							hints: savedProgress.hints ?? []
+						}));
+					}
+					return;
+				}
 			}
 		}
 

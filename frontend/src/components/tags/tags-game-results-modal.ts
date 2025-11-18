@@ -1,5 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import { ReduxMixin } from '../../store/ReduxMixin';
+import { getStreakInfo, getTodaysResult } from '../../services/tags/localSave';
 
 class TagsGameResultsModal extends ReduxMixin(LitElement) {
 	static styles = css`
@@ -117,6 +118,34 @@ class TagsGameResultsModal extends ReduxMixin(LitElement) {
 			background: #17a2b8;
 		}
 
+		.streak-info {
+			display: flex;
+			justify-content: center;
+			gap: 3rem;
+			margin: 1.5rem 0;
+			flex-wrap: wrap;
+		}
+
+		.streak-item {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			gap: 0.25rem;
+		}
+
+		.streak-label {
+			font-size: 0.9rem;
+			color: #666;
+			text-transform: uppercase;
+			letter-spacing: 0.05em;
+		}
+
+		.streak-value {
+			font-size: 2rem;
+			font-weight: bold;
+			color: #007acc;
+		}
+
 		@media (max-width: 768px) {
 			:host(.visible) {
 				padding: 0.5rem;
@@ -179,10 +208,11 @@ class TagsGameResultsModal extends ReduxMixin(LitElement) {
 	private async handleShare() {
 		const gameState = this.getState().tagsGame;
 		const { dailyDate } = this.getState().date;
-		const { roundResults } = gameState;
 		
-		const isCorrect = roundResults[0]?.isCorrect;
-		const guessCount = roundResults[0]?.userGuesses.length || 0;
+		const todayResult = dailyDate ? getTodaysResult(dailyDate) : null;
+		
+		const isCorrect = todayResult ? todayResult.success : (gameState.roundResults[0]?.isCorrect || false);
+		const guessCount = todayResult ? todayResult.guessesUsed : (gameState.currentGuesses.length || 0);
 		
 		const resultEmoji = isCorrect ? '✅' : '❌';
         const shareText = `${resultEmoji} ${guessCount}/${gameState.maxGuesses} | ${dailyDate} | https://steam.literallyjosh.com`;
@@ -204,9 +234,11 @@ class TagsGameResultsModal extends ReduxMixin(LitElement) {
 		const gameState = this.getState().tagsGame;
 		const { dailyDate } = this.getState().date;
 		
-		const { gameComplete, roundResults, dailyGame } = gameState;
+		const { gameComplete, roundResults, dailyGame, currentGuesses } = gameState;
 
-		const shouldShow = gameComplete;
+		const todayResult = dailyDate ? getTodaysResult(dailyDate) : null;
+		const shouldShow = gameComplete || todayResult !== null;
+		const { currentStreak, highestStreak } = getStreakInfo();
 		
 		if (shouldShow) {
 			this.classList.add('visible');
@@ -218,8 +250,8 @@ class TagsGameResultsModal extends ReduxMixin(LitElement) {
 			return html``;
 		}
 
-		const isCorrect = roundResults[0]?.isCorrect;
-		const guessCount = roundResults[0]?.userGuesses.length || 0;
+		const isCorrect = todayResult ? todayResult.success : (roundResults[0]?.isCorrect || false);
+		const guessCount = todayResult ? todayResult.guessesUsed : currentGuesses.length;
 
 		return html`
 			<div class="modal" @click=${(e: Event) => e.stopPropagation()}>
@@ -243,6 +275,17 @@ class TagsGameResultsModal extends ReduxMixin(LitElement) {
 						? `You guessed it in ${guessCount} ${guessCount === 1 ? 'try' : 'tries'}!`
 						: `You used all ${gameState.maxGuesses} guesses.`
 					}
+				</div>
+
+				<div class="streak-info">
+					<div class="streak-item">
+						<div class="streak-label">Current streak</div>
+						<div class="streak-value">${currentStreak}</div>
+					</div>
+					<div class="streak-item">
+						<div class="streak-label">Highest streak</div>
+						<div class="streak-value">${highestStreak}</div>
+					</div>
 				</div>
 				
 				<div class="modal-buttons">

@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { apiService, GameRound as ApiGameRound } from '../../services/api';
-import { clearOldProgress } from '../../services/localSave';
+import { clearOldProgress } from '../../services/reviews/localSave';
 import { ImagePreloader } from '../../services/imagePreloader';
 import type { RootState } from '../store';
 
@@ -194,7 +194,6 @@ const gameStatusSlice = createSlice({
 				}
 				});
 			
-			// Needed if user refreshes while on last round
 			const allRoundsPlayed = state.roundResults.every(round => round.played);
 			if (allRoundsPlayed) {
 				state.gameComplete = true;

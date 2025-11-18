@@ -24,8 +24,11 @@ interface InProgressGame {
     timestamp: number;
 }
 
+const SAVE_KEY = 'dailySave';
+const GAME_MODE = 'reviews';
+
 export function saveDailyResult(day: string, correct: number, roundResults: boolean[]): void {
-    const saveStr = localStorage.getItem('dailySave');
+    const saveStr = localStorage.getItem(SAVE_KEY);
 
     let save: Save;
     if (saveStr) {
@@ -37,14 +40,20 @@ export function saveDailyResult(day: string, correct: number, roundResults: bool
         };
     }
 
-    save.currentStreak.push({ day, numberCorrect: correct, roundResults });
-    save.highestStreak = Math.max(save.highestStreak, save.currentStreak.length);
+    const existingIndex = save.currentStreak.findIndex(result => result.day === day);
     
-    localStorage.setItem('dailySave', JSON.stringify(save));
+    if (existingIndex !== -1) {
+        save.currentStreak[existingIndex] = { day, numberCorrect: correct, roundResults };
+    } else {
+        save.currentStreak.push({ day, numberCorrect: correct, roundResults });
+        save.highestStreak = Math.max(save.highestStreak, save.currentStreak.length);
+    }
+    
+    localStorage.setItem(SAVE_KEY, JSON.stringify(save));
 }
 
 export function hasPlayedToday(day: string): boolean {
-    const saveStr = localStorage.getItem('dailySave');
+    const saveStr = localStorage.getItem(SAVE_KEY);
 
     if (saveStr) {
         const save: Save = JSON.parse(saveStr);
@@ -55,7 +64,7 @@ export function hasPlayedToday(day: string): boolean {
 }
 
 export function getTodaysResult(day: string): DailyResult | null {
-    const saveStr = localStorage.getItem('dailySave');
+    const saveStr = localStorage.getItem(SAVE_KEY);
 
     if (saveStr) {
         const save: Save = JSON.parse(saveStr);
@@ -66,7 +75,7 @@ export function getTodaysResult(day: string): DailyResult | null {
 }
 
 export function getStreakInfo(): { currentStreak: number; highestStreak: number } {
-    const saveStr = localStorage.getItem('dailySave');
+    const saveStr = localStorage.getItem(SAVE_KEY);
 
     if (saveStr) {
         const save: Save = JSON.parse(saveStr);
@@ -79,8 +88,13 @@ export function getStreakInfo(): { currentStreak: number; highestStreak: number 
     return { currentStreak: 0, highestStreak: 0 };
 }
 
-export function saveCurrentProgress(day: string, score: number, currentRound: number, roundResults: RoundResult[]): void {
-    const key = `progress_${day}`;
+export function saveCurrentProgress(
+    day: string,
+    score: number, 
+    currentRound: number, 
+    roundResults: RoundResult[]
+): void {
+    const key = `progress_${day}_${GAME_MODE}`;
     const progress: InProgressGame = {
         score,
         currentRound: currentRound + 1,
@@ -91,7 +105,7 @@ export function saveCurrentProgress(day: string, score: number, currentRound: nu
 }
 
 export function loadCurrentProgress(day: string): InProgressGame | null {
-    const key = `progress_${day}`;
+    const key = `progress_${day}_${GAME_MODE}`;
     const saved = localStorage.getItem(key);
     if (saved) {
         return JSON.parse(saved);
@@ -100,18 +114,22 @@ export function loadCurrentProgress(day: string): InProgressGame | null {
 }
 
 export function clearCurrentProgress(day: string): void {
-    const key = `progress_${day}`;
+    const key = `progress_${day}_${GAME_MODE}`;
     localStorage.removeItem(key);
 }
 
 export function clearOldProgress(currentDay: string): void {
-    // Get all localStorage keys
     const keys = Object.keys(localStorage);
     
-    // Find and remove any progress keys that don't match today
     keys.forEach(key => {
-        if (key.startsWith('progress_') && key !== `progress_${currentDay}`) {
-            localStorage.removeItem(key);
+        if (key.startsWith(`progress_`) && key.endsWith(`_${GAME_MODE}`)) {
+            const parts = key.split('_');
+            if (parts.length >= 3) {
+                const dateInKey = parts.slice(1, -1).join('_');
+                if (dateInKey !== currentDay) {
+                    localStorage.removeItem(key);
+                }
+            }
         }
     });
 }
