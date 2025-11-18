@@ -1,6 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import { property } from 'lit/decorators.js';
-import type { RoundResult } from '../store/slices/gameStatusSlice';
+import type { RoundResult } from '../../store/slices/gameStatusSlice';
 
 class ResultsSummary extends LitElement {
     @property({ type: Array })

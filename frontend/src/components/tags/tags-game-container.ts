@@ -1,6 +1,7 @@
 import { LitElement, html, css } from 'lit';
 import { ReduxMixin } from '../../store/ReduxMixin';
 import { getCurrentGame } from '../../store/slices/tagsGameSlice';
+import './tags-game-results-modal';
 
 class TagsGameContainer extends ReduxMixin(LitElement) {
     static styles = css`
@@ -40,6 +41,7 @@ class TagsGameContainer extends ReduxMixin(LitElement) {
             <tags-game-round
             .game=${currentGame}>
             </tags-game-round>
+            <tags-game-results-modal></tags-game-results-modal>
         `;
     }
 }

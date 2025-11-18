@@ -2,7 +2,7 @@ import './components/app';
 import './components/start-screen';
 import './components/reviews/game-status';
 import './components/reviews/game-results-modal';
-import './components/results-summary';
+import './components/reviews/results-summary';
 import './components/reviews/game';
 import './components/reviews/games-container';
 import './components/reviews/round-indicators';

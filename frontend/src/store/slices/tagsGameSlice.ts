@@ -105,6 +105,8 @@ const tagsGameSlice = createSlice({
 			if (shouldEndRound) {
 				state.currentRoundAnswered = true;
 				state.showingResults = true;
+				state.gameComplete = true;
+				state.gameInProgress = false;
 			}
 			
 			if (currentRoundIndex >= 0 && currentRoundIndex < state.roundResults.length) {
