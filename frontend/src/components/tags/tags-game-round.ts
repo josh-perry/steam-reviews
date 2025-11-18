@@ -236,7 +236,7 @@ class TagsGameRound extends ReduxMixin(LitElement) {
 	private handleSubmit() {
 		if (!this.currentGuess.trim()) return;
 
-		const { gameInProgress, currentRoundAnswered } = this.getState().tagsGame;
+		const { gameInProgress, currentRoundAnswered, currentGuesses } = this.getState().tagsGame;
 		
 		if (gameInProgress && !currentRoundAnswered) {
 			const normalizedGuess = this.currentGuess.trim().toLowerCase();
@@ -256,10 +256,9 @@ class TagsGameRound extends ReduxMixin(LitElement) {
 	}
 
 	render() {
-		const { currentRoundAnswered, showResultColors, roundResults, currentRound, currentGuesses, maxGuesses } = this.getState().tagsGame;
+		const { currentRoundAnswered, showResultColors, roundResults, currentRound, currentGuesses, maxGuesses, hints } = this.getState().tagsGame;
 		
-		const tags = this.game.tags || [];
-		const hints: string[] = [];
+		const tags = this.game.tags?.slice(0, 10 + currentGuesses.length) || [];
 		const currentRoundResult = roundResults[currentRound - 1];
 		const isCorrect = currentRoundResult?.isCorrect;
 		const remainingGuesses = maxGuesses - currentGuesses.length;

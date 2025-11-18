@@ -8,6 +8,8 @@ export interface Game {
 	id: number;
 	name: string;
 	appId: number;
+	developers: string[];
+	publishers: string[];
 	rating: number;
 	reviewCount: number;
 	imgUrl: string;

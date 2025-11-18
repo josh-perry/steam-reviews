@@ -11,6 +11,8 @@ export interface Game {
 	reviewCount: number;
 	imgUrl: string;
 	tags?: string[];
+	developers: string[];
+	publishers: string[];
 }
 
 export interface TagsRoundResult {
@@ -25,6 +27,7 @@ interface TagsGameState {
 	currentRound: number;
 	totalRounds: number;
 	roundResults: TagsRoundResult[];
+	hints: string[];
 	dailyGame: Game | null;
 	score: number;
 	currentRoundAnswered: boolean;
@@ -40,6 +43,7 @@ const initialState: TagsGameState = {
 	currentRound: 0,
 	totalRounds: 1,
 	roundResults: [],
+	hints: [],
 	dailyGame: null,
 	score: 0,
 	currentRoundAnswered: false,
@@ -113,6 +117,12 @@ const tagsGameSlice = createSlice({
 				
 				if (isCorrect) {
 					state.score += 1;
+				} else {
+					if (state.currentGuesses.length === 1) {
+						state.hints.push(`Publisher: ${state.dailyGame?.publishers.join(', ')}`);
+					} else if (state.currentGuesses.length === 2) {
+						state.hints.push(`Developer: ${state.dailyGame?.developers.join(', ')}`);
+					}
 				}
 			}
 		},

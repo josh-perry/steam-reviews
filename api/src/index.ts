@@ -356,7 +356,7 @@ const getGameTags = (appId: number): Promise<string[]> => {
             JOIN tag t ON t.id = at.tag_id 
             WHERE app.id = ?
             ORDER BY at.votes DESC
-            LIMIT 10
+            LIMIT 19
         `;
 
         db.all(query, [appId], (err, rows: any[]) => {
