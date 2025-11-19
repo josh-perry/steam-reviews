@@ -120,9 +120,9 @@ const tagsGameSlice = createSlice({
 				if (isCorrect) {
 					state.score += 1;
 				} else {
-					if (state.currentGuesses.length === 1) {
+					if (state.currentGuesses.length === 5) {
 						state.hints.push(`Publisher: ${state.dailyGame?.publishers.join(', ')}`);
-					} else if (state.currentGuesses.length === 2) {
+					} else if (state.currentGuesses.length === 8) {
 						state.hints.push(`Developer: ${state.dailyGame?.developers.join(', ')}`);
 					}
 				}
