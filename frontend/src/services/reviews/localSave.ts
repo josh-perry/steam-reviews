@@ -13,7 +13,6 @@ interface DailyResult {
 }
 
 interface Save {
-    currentStreak: DailyResult[];
     highestStreak: number;
     allDays: { [key: string]: DailyResult };
 }
@@ -28,6 +27,110 @@ interface InProgressGame {
 const SAVE_KEY = 'dailySave';
 const GAME_MODE = 'reviews';
 
+function migrateOldFormat(): void {
+    const saveStr = localStorage.getItem(SAVE_KEY);
+    
+    if (saveStr) {
+        try {
+            const save = JSON.parse(saveStr);
+            
+            if (Array.isArray(save.currentStreak)) {
+                const newSave: Save = {
+                    highestStreak: save.highestStreak || 0,
+                    allDays: save.allDays || {}
+                };
+                
+                if (save.currentStreak.length > 0) {
+                    save.currentStreak.forEach((result: DailyResult) => {
+                        if (result.day && !newSave.allDays[result.day]) {
+                            newSave.allDays[result.day] = result;
+                        }
+                    });
+                }
+                
+                localStorage.setItem(SAVE_KEY, JSON.stringify(newSave));
+            }
+        } catch (e) {
+            localStorage.removeItem(SAVE_KEY);
+        }
+    }
+}
+
+export function testMigrateOldFormat(): void {
+    migrateOldFormat();
+}
+
+function calculateCurrentStreak(allDays: { [key: string]: DailyResult }): number {
+    if (Object.keys(allDays).length === 0) {
+        return 0;
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const todayStr = today.toISOString().split('T')[0];
+    let currentDate = new Date(today);
+
+    if (!allDays[todayStr]) {
+        currentDate.setDate(currentDate.getDate() - 1);
+        const yesterdayStr = currentDate.toISOString().split('T')[0];
+        
+        if (!allDays[yesterdayStr]) {
+            return 0;
+        }
+    }
+
+    let streakCount = 0;
+
+    while (true) {
+        const dateStr = currentDate.toISOString().split('T')[0];
+        const result = allDays[dateStr];
+
+        if (!result) {
+            break;
+        }
+
+        streakCount++;
+        currentDate.setDate(currentDate.getDate() - 1);
+    }
+
+    return streakCount;
+}
+
+function calculateLongestStreak(allDays: { [key: string]: DailyResult }): number {
+    const days = Object.keys(allDays).sort();
+    
+    if (days.length === 0) {
+        return 0;
+    }
+
+    let longestStreak = 0;
+    let currentStreak = 0;
+    let lastDate: Date | null = null;
+
+    for (const day of days) {
+        const result = allDays[day];
+        const currentDate = new Date(day);
+
+        if (lastDate) {
+            const expectedDate = new Date(lastDate);
+            expectedDate.setDate(expectedDate.getDate() + 1);
+            
+            if (currentDate.getTime() !== expectedDate.getTime()) {
+                longestStreak = Math.max(longestStreak, currentStreak);
+                currentStreak = 1;
+                lastDate = currentDate;
+                continue;
+            }
+        }
+
+        currentStreak++;
+        lastDate = currentDate;
+    }
+
+    return Math.max(longestStreak, currentStreak);
+}
+
 export function saveDailyResult(day: string, correct: number, roundResults: boolean[]): void {
     const saveStr = localStorage.getItem(SAVE_KEY);
 
@@ -39,38 +142,15 @@ export function saveDailyResult(day: string, correct: number, roundResults: bool
         }
     } else {
         save = {
-            currentStreak: [],
             highestStreak: 0,
             allDays: {}
         };
     }
 
-    if (save.allDays[day]) {
-        save.allDays[day] = { day, numberCorrect: correct, roundResults };
-        
-        const existingIndex = save.currentStreak.findIndex(result => result.day === day);
-        if (existingIndex !== -1) {
-            save.currentStreak[existingIndex] = { day, numberCorrect: correct, roundResults };
-        }
-    } else {
-        save.allDays[day] = { day, numberCorrect: correct, roundResults };
-        
-        if (save.currentStreak.length > 0) {
-            const lastDay = save.currentStreak[save.currentStreak.length - 1].day;
-            const lastDate = new Date(lastDay);
-            const currentDate = new Date(day);
-            
-            const diffTime = currentDate.getTime() - lastDate.getTime();
-            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-            
-            if (diffDays !== 1) {
-                save.currentStreak = [];
-            }
-        }
-        
-        save.currentStreak.push({ day, numberCorrect: correct, roundResults });
-        save.highestStreak = Math.max(save.highestStreak, save.currentStreak.length);
-    }
+    save.allDays[day] = { day, numberCorrect: correct, roundResults };
+
+    const longestStreak = calculateLongestStreak(save.allDays);
+    save.highestStreak = Math.max(save.highestStreak, longestStreak);
     
     localStorage.setItem(SAVE_KEY, JSON.stringify(save));
 }
@@ -80,11 +160,7 @@ export function hasPlayedToday(day: string): boolean {
 
     if (saveStr) {
         const save: Save = JSON.parse(saveStr);
-        if (save.allDays && save.allDays[day]) {
-            return true;
-        }
-
-        return save.currentStreak.some(result => result.day === day);
+        return save.allDays && save.allDays[day] !== undefined;
     }
 
     return false;
@@ -95,12 +171,7 @@ export function getTodaysResult(day: string): DailyResult | null {
 
     if (saveStr) {
         const save: Save = JSON.parse(saveStr);
-
-        if (save.allDays && save.allDays[day]) {
-            return save.allDays[day];
-        }
-
-        return save.currentStreak.find(result => result.day === day) || null;
+        return save.allDays && save.allDays[day] ? save.allDays[day] : null;
     }
 
     return null;
@@ -112,7 +183,7 @@ export function getStreakInfo(): { currentStreak: number; highestStreak: number 
     if (saveStr) {
         const save: Save = JSON.parse(saveStr);
         return {
-            currentStreak: save.currentStreak.length,
+            currentStreak: calculateCurrentStreak(save.allDays),
             highestStreak: save.highestStreak
         };
     }
@@ -165,3 +236,5 @@ export function clearOldProgress(currentDay: string): void {
         }
     });
 }
+
+migrateOldFormat();
