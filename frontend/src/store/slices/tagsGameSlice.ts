@@ -97,6 +97,10 @@ const tagsGameSlice = createSlice({
 		submitGuess: (state, action: PayloadAction<{ guess: string; isCorrect: boolean }>) => {
 			const { guess, isCorrect } = action.payload;
 			const currentRoundIndex = state.currentRound - 1;
+
+			if (state.currentGuesses.includes(guess)) {
+				return;
+			}
 			
 			state.currentGuesses.push(guess);
 			

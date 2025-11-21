@@ -8,5 +8,6 @@ import './components/reviews/games-container';
 import './components/reviews/round-indicators';
 import './components/tags/tags-game-container';
 import './components/tags/tags-game-round';
+import './components/auto-complete-textbox';
 
 console.log('Steam reviews app loaded');

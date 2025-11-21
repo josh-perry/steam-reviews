@@ -11,9 +11,6 @@ class TagsGameRound extends ReduxMixin(LitElement) {
 	declare game: Game;
 
 	@state()
-	private currentGuess = '';
-
-	@state()
 	private gameNames: string[] = [];
 
 	static styles = css`
@@ -228,30 +225,17 @@ class TagsGameRound extends ReduxMixin(LitElement) {
 		}
 	}
 
-	private handleInput(e: Event) {
-		const input = e.target as HTMLInputElement;
-		this.currentGuess = input.value;
-	}
-
-	private handleSubmit() {
-		if (!this.currentGuess.trim()) return;
+	private handleSubmit(guess: string) {
+		if (!guess.trim()) return;
 
 		const { gameInProgress, currentRoundAnswered, currentGuesses } = this.getState().tagsGame;
 		
 		if (gameInProgress && !currentRoundAnswered) {
-			const normalizedGuess = this.currentGuess.trim().toLowerCase();
+			const normalizedGuess = guess.trim().toLowerCase();
 			const normalizedCorrectName = this.game.name.toLowerCase();
 			const isCorrect = normalizedGuess === normalizedCorrectName;
 			
-			this.dispatch(submitGuess({ guess: this.currentGuess, isCorrect }));
-			
-			this.currentGuess = '';
-		}
-	}
-
-	private handleKeyDown(e: KeyboardEvent) {
-		if (e.key === 'Enter') {
-			this.handleSubmit();
+			this.dispatch(submitGuess({ guess, isCorrect }));
 		}
 	}
 
@@ -297,32 +281,20 @@ class TagsGameRound extends ReduxMixin(LitElement) {
 					</div>
 				` : ''}
 
-				<div class="input-container">
-					<input
-						type="text"
-						placeholder="Enter game name..."
-						.value=${this.currentGuess}
-						@input=${this.handleInput}
-						@keydown=${this.handleKeyDown}
-						?disabled=${currentRoundAnswered}
-						list="game-names-list"
-					/>
-					<datalist id="game-names-list">
-						${this.gameNames.map(name => html`<option value="${name}"></option>`)}
-					</datalist>
-					<button
-						@click=${this.handleSubmit}
-						?disabled=${currentRoundAnswered || !this.currentGuess.trim()}
-					>
-						Submit
-					</button>
-				</div>
+				<auto-complete-textbox
+					placeholder="Enter game name..."
+					.suggestions=${this.gameNames}
+					@submit=${(e: CustomEvent) => {
+						this.handleSubmit(e.detail.value);
+					}}
+					?disabled=${currentRoundAnswered}>
+				</auto-complete-textbox>
 			</div>
 				${incorrectGuesses.length > 0 ? html`
 				<div class="previous-guesses">
 					<h4>Incorrect Guesses (${incorrectGuesses.length})</h4>
 					<div class="guesses-list">
-						${incorrectGuesses.map(guess => html`
+						${incorrectGuesses.reverse().map(guess => html`
 							<div class="guess-item ${isCloseGuess(guess) ? 'close' : ''}">${guess}</div>
 						`)}
 					</div>
