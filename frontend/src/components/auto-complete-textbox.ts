@@ -158,7 +158,9 @@ class AutoCompleteTextbox extends ReduxMixin(LitElement) {
                 <input type="text" placeholder="${this.placeholder}" @input=${this.handleInputChange}/>
                 <div class="suggestions" ?hidden=${this.matchingSuggestions.length === 0}>
                     ${this.matchingSuggestions.map((suggestion, index) => html`
-                        <div class="suggestion ${this.selectedSuggestionIndex === index ? 'selected' : ''}">${suggestion}</div>
+                        <div class="suggestion ${this.selectedSuggestionIndex === index ? 'selected' : ''}" @click=${() => this.submit(suggestion)}>
+                            ${suggestion}
+                        </div>
                     `)}
                 </div>
             </div>
