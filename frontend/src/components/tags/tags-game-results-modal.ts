@@ -146,6 +146,16 @@ class TagsGameResultsModal extends ReduxMixin(LitElement) {
 			color: #007acc;
 		}
 
+		.close-button {
+			background: #6c757d;
+			color: white;
+		}
+
+		.close-button:hover {
+			background: #5a6268;
+			transform: translateY(-2px);
+		}
+
 		@media (max-width: 768px) {
 			:host(.visible) {
 				padding: 0.5rem;
@@ -230,6 +240,10 @@ class TagsGameResultsModal extends ReduxMixin(LitElement) {
 		this.requestUpdate();
 	}
 
+	handleBack() {
+		window.location.href = '/';
+	}
+
 	render() {
 		const gameState = this.getState().tagsGame;
 		const { dailyDate } = this.getState().date;
@@ -291,6 +305,9 @@ class TagsGameResultsModal extends ReduxMixin(LitElement) {
 				<div class="modal-buttons">
 					<button class="button share-button ${this.shareButtonText === 'Copied!' ? 'copied' : ''}" @click=${this.handleShare}>
 						${this.shareButtonText}
+					</button>
+					<button class="button close-button" @click=${this.handleBack}>
+						Back
 					</button>
 				</div>
 			</div>

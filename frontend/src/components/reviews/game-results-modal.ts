@@ -224,6 +224,10 @@ class GameResultsModal extends ReduxMixin(LitElement) {
 		this.requestUpdate();
 	}
 
+	handleBack() {
+		window.location.href = '/';
+	}
+
 	private getMessageForScore(score: number): string {
 		if (score === 0) {
 			return "Just as impressive as getting them all right, in a way!";
@@ -309,6 +313,9 @@ class GameResultsModal extends ReduxMixin(LitElement) {
 				<div class="modal-buttons">
 					<button class="button share-button ${this.shareButtonText === 'Copied!' ? 'copied' : ''}" @click=${this.handleShare}>
 						${this.shareButtonText}
+					</button>
+					<button class="button close-button" @click=${this.handleBack}>
+						Back
 					</button>
 				</div>
 			</div>
