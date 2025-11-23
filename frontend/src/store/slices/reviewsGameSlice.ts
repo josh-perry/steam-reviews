@@ -41,6 +41,7 @@ interface ReviewsGameState {
 	showResultColors: boolean;
 	gameInProgress: boolean;
 	gameComplete: boolean;
+	selectedResultRound: number;
 }
 
 const initialState: ReviewsGameState = {
@@ -54,6 +55,7 @@ const initialState: ReviewsGameState = {
 	showResultColors: false,
 	gameInProgress: false,
 	gameComplete: false,
+	selectedResultRound: 0,
 };
 
 export const fetchRounds = createAsyncThunk(
@@ -201,6 +203,33 @@ const reviewsGameSlice = createSlice({
 			state.gameComplete = true;
 			state.gameInProgress = false;
 		},
+
+		setSelectedResultRound: (state, action: PayloadAction<number>) => {
+			state.selectedResultRound = action.payload;
+		},
+
+		jumpToRound: (state, action: PayloadAction<number>) => {
+			const targetRound = action.payload;
+			const nextUnplayedRound = state.roundResults.findIndex(r => !r.played) + 1;
+			
+			// When game is complete, allow jumping to any round
+			const canJump = state.gameComplete 
+				? (targetRound >= 1 && targetRound <= state.totalRounds)
+				: (targetRound <= nextUnplayedRound && targetRound >= 1 && targetRound <= state.totalRounds);
+			
+			if (canJump) {
+				state.currentRound = targetRound;
+				state.currentRoundAnswered = true;
+				state.showingResults = true;
+				state.showResultColors = false;
+				
+				// Ensure result is marked as visible for this round
+				const roundResult = state.roundResults[targetRound - 1];
+				if (roundResult) {
+					roundResult.resultVisible = true;
+				}
+			}
+		},
 	},
 	extraReducers: (builder) => {
 		builder
@@ -244,9 +273,11 @@ export const {
 	showRoundResult,
 	showRoundResultColors,
 	proceedToNextRound,
+	jumpToRound,
 	restoreProgress,
 	resetReviewsGame,
-	showCompletedGame
+	showCompletedGame,
+	setSelectedResultRound
 } = reviewsGameSlice.actions;
 
 export default reviewsGameSlice.reducer;

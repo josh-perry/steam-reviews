@@ -7,6 +7,7 @@ import fs from 'fs';
 import https from 'https';
 import { spawn } from 'child_process';
 import seedrandom from 'seedrandom';
+import { fetchIconUrl, rateLimitedFetchIconUrl } from './services/icon_url_fetcher';
 
 dotenv.config();
 
@@ -28,6 +29,7 @@ interface Game {
     rating: number;
     reviewCount: number;
     imgUrl?: string;
+    iconUrl?: string;
     tags?: string[];
     developers?: string[];
     publishers?: string[];
@@ -243,6 +245,7 @@ const transformDatabaseRow = async (row: any): Promise<Game> => ({
         : 0,
     reviewCount: row.total_reviews || 0,
     imgUrl: await getHeroImageUrl(row.id).catch(() => undefined),
+    iconUrl: await rateLimitedFetchIconUrl(row.id).catch(() => undefined),
     tags: await getGameTags(row.id).catch(() => []),
     developers: await getGameDevelopers(row.id).catch(() => []),
     publishers: await getGamePublishers(row.id).catch(() => []),

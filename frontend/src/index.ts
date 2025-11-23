@@ -6,6 +6,7 @@ import './components/reviews/results-summary';
 import './components/reviews/game';
 import './components/reviews/games-container';
 import './components/reviews/round-indicators';
+import './components/reviews/mini-round-summary'
 import './components/tags/tags-game-container';
 import './components/tags/tags-game-round';
 import './components/auto-complete-textbox';

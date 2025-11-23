@@ -263,7 +263,7 @@ class GameResultsModal extends ReduxMixin(LitElement) {
 	render() {
 		const gameState = this.getState().reviewsGame;
 		
-		const { gameComplete, score, totalRounds, roundResults } = gameState;
+		const { gameComplete, score, totalRounds, roundResults, selectedResultRound } = gameState;
         const { dailyDate } = this.getState().date;
 
 		const todayResult = dailyDate ? getTodaysResult(dailyDate) : null;
@@ -283,21 +283,33 @@ class GameResultsModal extends ReduxMixin(LitElement) {
 		const displayScore = todayResult ? todayResult.numberCorrect : score;
 		const displayRoundResults = todayResult ? todayResult.roundResults : roundResults;
 
+		const roundToDisplay = selectedResultRound > 0 ? selectedResultRound - 1 : 0;
+		const gameA = gameState.roundResults[roundToDisplay]?.gameA;
+		const gameB = gameState.roundResults[roundToDisplay]?.gameB;
+
 		return html`
 			<div class="modal" @click=${(e: Event) => e.stopPropagation()}>
 				<h2>${dailyDate}</h2>
 				<div class="score-display">${displayScore}/${totalRounds}</div>
-				
-				${(gameComplete || todayResult) ? html`
-					<results-summary 
-						.roundResults=${displayRoundResults}>
-					</results-summary>
-				` : ''}
 
 				<div>
 					${this.getMessageForScore(displayScore)}
 					${this.getEmojiForScore(displayScore)}
 				</div>
+				
+				${(gameComplete || todayResult) ? html`
+					<div class="mini-round-summary-container">
+						<results-summary 
+							.roundResults=${displayRoundResults}>
+						</results-summary>
+
+						<mini-round-summary
+							.gameA=${gameA}
+							.gameB=${gameB}
+							.roundIndex=${roundToDisplay}
+						></mini-round-summary>
+					</div>
+				` : ''}
 
 				<div class="streak-info">
 						<div class="streak-item">

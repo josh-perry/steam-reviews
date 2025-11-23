@@ -13,6 +13,7 @@ export interface Game {
 	rating: number;
 	reviewCount: number;
 	imgUrl: string;
+	iconUrl: string;
 	tags?: string[];
 }
 
