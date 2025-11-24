@@ -277,11 +277,13 @@ class TagsGameResultsModal extends ReduxMixin(LitElement) {
 
 				<div class="game-info">
 					<div class="game-name">The answer was: ${dailyGame.name}</div>
-					<img 
-						class="game-image"
-						src="${dailyGame.imgUrl}" 
-						alt="${dailyGame.name}"
-					/>
+					<a href="https://store.steampowered.com/app/${dailyGame.appId}/" target="_blank" rel="noopener">
+						<img 
+							class="game-image"
+							src="${dailyGame.imgUrl}" 
+							alt="${dailyGame.name}"
+						/>
+					</a>
 				</div>
 
 				<div class="guesses-info">
